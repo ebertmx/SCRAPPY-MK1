@@ -1,0 +1,1 @@
+flash SPI at 20MHz for stability
