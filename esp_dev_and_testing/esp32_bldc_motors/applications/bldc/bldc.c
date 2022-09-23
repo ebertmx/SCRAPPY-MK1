@@ -91,7 +91,7 @@ esp_err_t setmotordir(struct pwm_motor *motor, struct pcnt_sensor *sensor, uint1
     {
         sensor->count_dir = PCNT_COUNT_DEC;
     }
-    printf("sensor direction %d\n", sensor->count_dir);
+   // printf("sensor direction %d\n", sensor->count_dir);
     pcnt_set_mode(sensor->unit, sensor->channel, sensor->count_dir, PCNT_COUNT_DIS, PCNT_MODE_KEEP, PCNT_MODE_KEEP);
     return ESP_OK;
 }

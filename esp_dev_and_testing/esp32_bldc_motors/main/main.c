@@ -9,8 +9,8 @@
 
 pwm_motor motorA = {
 
-    .pin_mcpwm = 2,
-    .pin_dir = 4,
+    .pin_mcpwm = 16,
+    .pin_dir = 17,
     .duty = 0,
     .dir = 0,
     .io = MCPWM0A,
@@ -20,7 +20,7 @@ pwm_motor motorA = {
 
 pcnt_sensor sensorA = {
     .motor_pos = 0,
-    .pin_pulse = 15,
+    .pin_pulse = 4,
     .pos_h_limit = 1000,
     .pos_l_limit = -1000,
     .count_dir = PCNT_COUNT_DEC,
@@ -28,8 +28,8 @@ pcnt_sensor sensorA = {
     .channel = PCNT_CHANNEL_0};
 
 pwm_motor motorB = {
-    .pin_mcpwm = 17,
-    .pin_dir = 5,
+    .pin_mcpwm = 19,
+    .pin_dir = 21,
     .duty = 0,
     .dir = 0,
     .io = MCPWM1A,
@@ -39,17 +39,17 @@ pwm_motor motorB = {
 
 pcnt_sensor sensorB = {
     .motor_pos = 0,
-    .pin_pulse = 16,
-    .pos_h_limit = 2000,
-    .pos_l_limit = -2000,
+    .pin_pulse = 18,
+    .pos_h_limit = 500,
+    .pos_l_limit = -500,
     .count_dir = PCNT_COUNT_DEC,
     .unit = PCNT_UNIT_1,
     .channel = PCNT_CHANNEL_0};
 
 pwm_motor motorC = {
 
-    .pin_mcpwm = 19,
-    .pin_dir = 21,
+    .pin_mcpwm = 26,
+    .pin_dir = 27,
     .duty = 15,
     .dir = 0,
     .io = MCPWM2A,
@@ -59,7 +59,7 @@ pwm_motor motorC = {
 
 pcnt_sensor sensorC = {
     .motor_pos = 0,
-    .pin_pulse = 18,
+    .pin_pulse = 25,
     .pos_h_limit = 200,
     .pos_l_limit = -200,
     .count_dir = PCNT_COUNT_DEC,
@@ -184,6 +184,8 @@ TaskHandle_t RunCHandle = NULL;
 
 void app_main(void)
 {
+
+
     // pcnt_isr_service_install(0);
     ESP_ERROR_CHECK(bldc_init(&motorA, &sensorA));
     ESP_ERROR_CHECK(setmotorspeed(&motorA, 100));
@@ -194,7 +196,7 @@ void app_main(void)
 
     xTaskCreate(RunMotorA, "RunMotorA", 2000, (void *)1, tskIDLE_PRIORITY, &RunAHandle);
     xTaskCreate(RunMotorB, "RunMotorB", 2000, (void *)1, tskIDLE_PRIORITY, &RunBHandle);
-    xTaskCreate(RunMotorC, "RunMotorC", 2000, (void *)1, tskIDLE_PRIORITY, &RunCHandle);
+   xTaskCreate(RunMotorC, "RunMotorC", 2000, (void *)1, tskIDLE_PRIORITY, &RunCHandle);
     // vTaskStartScheduler ();
     // vTaskDelete(&RunAHandle);
     // pcnt_evt_queue = xQueueCreate(10, sizeof(pcnt_evt_t));

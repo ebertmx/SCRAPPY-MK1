@@ -1,4 +1,4 @@
-/* * Data converted from C:/dev/esp32_peripherals/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from F:/GitHub/SCRAPPY-MK1/esp_dev_and_testing/esp32_bldc_motors/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded
