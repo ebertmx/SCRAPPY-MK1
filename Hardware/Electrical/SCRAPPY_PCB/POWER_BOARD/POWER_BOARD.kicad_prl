@@ -1,8 +1,8 @@
 {
   "board": {
-    "active_layer": 31,
+    "active_layer": 44,
     "active_layer_preset": "",
-    "auto_track_width": false,
+    "auto_track_width": true,
     "hidden_nets": [],
     "high_contrast_mode": 0,
     "net_color_mode": 1,
@@ -62,30 +62,30 @@
       35,
       36
     ],
-    "visible_layers": "ffcff3f_ffffffff",
+    "visible_layers": "ffc1f3f_ffffffff",
     "zone_display_mode": 0
   },
   "meta": {
-    "filename": "SCRAPPY_PCB.kicad_prl",
+    "filename": "POWER_BOARD.kicad_prl",
     "version": 3
   },
   "project": {
     "files": [
       {
-        "name": "SCRAPPY_PCB.kicad_pcb",
-        "open": false,
+        "name": "POWER_BOARD.kicad_sch",
+        "open": true,
         "window": {
-          "display": 0,
+          "display": 1,
           "maximized": true,
-          "pos_x": -8,
+          "pos_x": 2552,
           "pos_y": -8,
-          "size_x": 2576,
-          "size_y": 1416
+          "size_x": 1936,
+          "size_y": 1056
         }
       },
       {
-        "name": "SCRAPPY_PCB.kicad_sch",
-        "open": false,
+        "name": "POWER_BOARD.kicad_pcb",
+        "open": true,
         "window": {
           "display": 0,
           "maximized": true,
