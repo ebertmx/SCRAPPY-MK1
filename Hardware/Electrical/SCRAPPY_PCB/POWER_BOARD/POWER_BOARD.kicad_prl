@@ -75,12 +75,12 @@
         "name": "POWER_BOARD.kicad_sch",
         "open": true,
         "window": {
-          "display": 1,
+          "display": 0,
           "maximized": true,
-          "pos_x": 2552,
+          "pos_x": -8,
           "pos_y": -8,
-          "size_x": 1936,
-          "size_y": 1056
+          "size_x": 2576,
+          "size_y": 1416
         }
       },
       {
