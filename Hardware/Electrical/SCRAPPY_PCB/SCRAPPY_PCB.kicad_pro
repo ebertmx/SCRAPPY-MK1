@@ -388,8 +388,8 @@
       "idf": "",
       "netlist": "",
       "specctra_dsn": "",
-      "step": "",
-      "vrml": ""
+      "step": "SCRAPPY_PCB.step",
+      "vrml": "SCRAPPY_PCB.wrl"
     },
     "page_layout_descr_file": ""
   },
