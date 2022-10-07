@@ -1,0 +1,139 @@
+#include "bldc.h"
+
+bool IRAM_ATTR capture_ISR(mcpwm_unit_t mcpwm, mcpwm_capture_channel_id_t cap_channel, const cap_event_data_t *edata, void *user_data)
+{
+    //uint32_t t = mcpwm_capture_signal_get_value(mcpwm, cap_channel);
+    TaskHandle_t han = *(TaskHandle_t*)user_data;
+    BaseType_t checkYield;
+    checkYield = xTaskResumeFromISR(han);
+    portYIELD_FROM_ISR(checkYield);
+    return true;
+}
+
+esp_err_t bldc_init(struct bldc_motor *motor)
+{
+
+    // MOTOR
+    // initialize pins
+    ESP_ERROR_CHECK(mcpwm_gpio_init(motor->unit, motor->io, motor->pin_mcpwm)); // pwm pin
+    ESP_ERROR_CHECK(mcpwm_gpio_init(motor->unit, motor->cap, motor->pin_cap));  // cap pin
+
+    mcpwm_config_t pwm_config_motor1 = {
+        .frequency = 20000,
+        .cmpr_a = 0,
+        .counter_mode = MCPWM_UP_COUNTER,
+        .duty_mode = MCPWM_DUTY_MODE_1,
+    };
+
+    mcpwm_init(motor->unit, motor->timer, &pwm_config_motor1);
+
+    // Enable capture
+    mcpwm_capture_config_t cap_config = {
+        .cap_edge = MCPWM_POS_EDGE,
+        .cap_prescale = 1,
+        .capture_cb = &capture_ISR,
+        .user_data = &(motor->printHelloHandle)};
+
+    ESP_ERROR_CHECK(mcpwm_capture_enable_channel(motor->unit, motor->cap_channel, &cap_config));
+
+    // DIRECTION
+    gpio_set_direction(motor->pin_dir, GPIO_MODE_OUTPUT);
+    gpio_set_level(motor->pin_dir, motor->dir);
+
+    return ESP_OK;
+}
+
+esp_err_t setmotordir(struct bldc_motor *motor, uint16_t direction)
+{
+    motor->dir = direction;
+    gpio_set_level(motor->pin_dir, motor->dir);
+
+    return ESP_OK;
+}
+
+esp_err_t setmotorspeed(struct bldc_motor *motor, float speed)
+{
+    motor->duty = speed;
+
+    ESP_ERROR_CHECK(mcpwm_set_duty(motor->unit, motor->timer, motor->gen, motor->duty));
+
+    return ESP_OK;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_attr.h"
+#include "soc/rtc.h"
+#include "driver/mcpwm.h"
+#include "soc/mcpwm_periph.h"
+#include "driver/gpio.h"
+#include "driver/pcnt.h"
+#include "esp_attr.h"
+#include "esp_log.h"
+#include "driver/gpio.h"
+#include "driver/pcnt.h"
+//static const char TAG = "BLDC";
+
+#define PCNT_H_LIM_VAL 500
+#define PCNT_L_LIM_VAL -500
+#define PCNT_THRESH1_VAL 5
+#define PCNT_THRESH0_VAL 0
+
+
+
+
+typedef struct bldc_motor
+{
+    int motor_pos;
+    
+    uint16_t pin_mcpwm;
+    uint16_t pin_dir;
+    uint16_t pin_cap;
+    int count;
+    float duty;
+    int dir;
+
+    mcpwm_io_signals_t io;
+    mcpwm_io_signals_t cap;
+
+    mcpwm_capture_signal_t cap_channel;
+
+    mcpwm_unit_t unit;
+    mcpwm_timer_t timer;
+    mcpwm_generator_t gen;
+
+    TaskHandle_t *printHelloHandle;
+
+}bldc_motor;
+
+
+xQueueHandle pcnt_evt_queue;
+
+
+typedef struct
+{
+    int unit;        // the PCNT unit that originated an interrupt
+    uint32_t status; // information on the event type that caused the interrupt
+} pcnt_evt_t;
+
+
+
+
+esp_err_t bldc_init(struct bldc_motor *motor);
+esp_err_t setmotordir(struct bldc_motor *motor, uint16_t direction);
+
+esp_err_t setmotorspeed(struct bldc_motor *motor, float speed);
