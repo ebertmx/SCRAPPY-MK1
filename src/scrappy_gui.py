@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from scrappy_server import *
+from serial_reader import *
 
 WIN_CLOSED = sg.WIN_CLOSED
 
@@ -64,14 +65,15 @@ def handle_event(ev, v, s):
 
 if __name__ == '__main__':
     window = sg.Window("SCRAPPY-MK1", layout, finalize=True)
-    with ArmServer(ADDRESS, window) as server:
+    with ArmServer(ADDRESS, window) as server, SerialReader("port", window) as reader:
         setup_window(window, server)
         server.start()
+        reader.start()
         while True:
             event, values = window.read()
             if event == WIN_CLOSED:
                 break
             handle_event(event, values, server)
             server.print_network_status()
-
+            window.write_event_value()
         window.close()

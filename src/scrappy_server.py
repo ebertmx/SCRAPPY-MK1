@@ -8,6 +8,8 @@ CAMERA_PORT = 9998
 HOST = socket.gethostbyname(socket.gethostname())
 ADDRESS = (HOST, CMD_PORT)
 
+print(HOST)
+
 
 class ArmServer:
 
@@ -20,7 +22,6 @@ class ArmServer:
         self.client = None
         self.addr = None
         self.server_thread = None
-
 
     def __enter__(self):
         return self

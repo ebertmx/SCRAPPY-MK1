@@ -1,0 +1,85 @@
+Goals of my system
+
+	Go to position
+		Acquire position input
+		Determine corresponding motor angles
+		Send data to scrappy from user terminal
+		Parse sent command
+		Set motor speed/direction
+		Run Motors
+		Monitor sensors
+		Monitor user input for STOP command
+
+
+User
+Control Server - PC
+	Written in Python
+	Communicates via TCP/IP with SCRAPPY Controller
+	Jobs:
+		Accept user input
+		Send formatted input to SCRAPPY controller
+		Recieve feedback from SCRAPPY controller
+		Display feedback for user
+		If no calibration, refuse coordinate input
+		
+		
+SCRAPPY Controller - ESP32
+	Written in C 
+	Communicates via TCP/IP with Control Server (Note TCP/IP not supported by host OS, must be manually written)
+	Keeps all encoder pulses in terms of pulse count
+	Jobs:
+		Prompt user for calibration to known state
+			If no calibration, refuse coordinate input
+		Parse formatted input from Control Server
+		Set speed and direction of motors
+		Monitor Sensors
+		Monitor Communications from Control Server
+		Convert formatted cartesian points to motor angles
+	Actuators
+	Sensors
+
+
+SCRAPPY Controller C&C Diagram
+	Task 1: 
+		Writes speed and direction data to pins (controls motors)
+		Counts encoder pulses
+		Send encoder pulse data to other processes
+		*Must support interrupts for safety etc.
+		Monitor Halleffect sensors
+		Tracks region, know motor direction
+			Detect if reaching edge of motor range, call STOP
+	Task 2:
+		Handle wifi interrupts that detect communications from server
+		Parse data from server
+		Wake tasks based on commands
+		Send feedback to server
+		Handle LCD display
+		Converts inputted coords to motor angles*(maybe another task)
+		Sends motor angles to Task 1
+	
+	Task 3:
+		Hardware interrupt support in case of network failure
+	
+	Task Startup:
+		Run Calibration
+	
+		
+
+@startuml
+package "SCRAPPY-Controller" {
+    component Movement_Control as MC
+    component Communcation as COM 
+    component Startup as S
+    component Local_Control as LC
+}
+
+rectangle "Control-Server"
+rectangle "Sensors" {
+     component Halleffect
+     component Encoder 
+}
+rectangle "Motors"
+
+MC --> Motors : angles and speed
+Encoder -down-> MC : pulses
+@enduml
