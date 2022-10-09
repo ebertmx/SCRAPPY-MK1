@@ -24,6 +24,13 @@ static const char *MCTAG = "Movement_Controller (MC)";
 // DATA TYPES
 
 // For motor direction
+typedef struct Vector3a_t  {
+     int16_t x;
+    int16_t y;
+    int16_t z;
+}Vector3a_t;
+
+
 typedef enum direction_t
 {
     dir_pos = 0,
@@ -47,6 +54,7 @@ typedef struct xSCRP_motor_t
     // settable properties
     float speed;
     int direction;
+    bool moving;
 
     int16_t position;
     // readable properties
