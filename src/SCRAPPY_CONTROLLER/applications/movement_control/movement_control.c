@@ -152,9 +152,9 @@ void SCRP_MovementControl(void *args)
                 ESP_ERROR_CHECK(xSetMotorDir(&CHARLIE_motor, dir_pos));
             }
 
-            ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 25));
-            ESP_ERROR_CHECK(xSetMotorSpeed(&ALPHA_motor, 25));
-               ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, 25));
+            ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 40));
+            ESP_ERROR_CHECK(xSetMotorSpeed(&ALPHA_motor, 40));
+               ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, 40));
 
             while (BETA_motor.moving | ALPHA_motor.moving)
             {
@@ -218,7 +218,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
         .frequency = PWMFREQUENCY,
         .cmpr_a = SCRP_motor->speed,
         .counter_mode = MCPWM_UP_COUNTER,
-        .duty_mode = MCPWM_DUTY_MODE_1,
+        .duty_mode = MCPWM_DUTY_MODE_0,
     };
 
     mcpwm_init(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, &pwm_config_motor);
