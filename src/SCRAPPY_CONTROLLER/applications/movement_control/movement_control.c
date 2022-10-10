@@ -237,7 +237,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
         .frequency = PWMFREQUENCY,
         .cmpr_a = SCRP_motor->speed,
         .counter_mode = MCPWM_UP_COUNTER,
-        .duty_mode = MCPWM_DUTY_MODE_1, // change!!!!!!!
+        .duty_mode = MCPWM_DUTY_MODE_0, // change!!!!!!!
     };
 
     mcpwm_init(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, &pwm_config_motor);

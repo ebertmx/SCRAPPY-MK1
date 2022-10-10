@@ -38,7 +38,7 @@ void app_main(void)
     //vTaskResume(Handle_PositionControl);
     ESP_LOGI(MainTAG, "Calibration Success");
 
-    int16_t myposition1[] = {-100, -100, 0, 40, 40, 40};
+    int16_t myposition1[] = {-100, -100, 0, 75, 75, 75};
 
    int16_t myposition2[] = {100, 100, 0, 60, 60, 60};
     while(1){
