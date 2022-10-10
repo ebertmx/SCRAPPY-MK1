@@ -60,7 +60,7 @@ static xSCRP_motor_t BETA_motor = {
     .enc_unit = PCNT_UNIT_1,
     .enc_channel = PCNT_CHANNEL_0};
 
-xSCRP_motor_t CHARLIE_motor = {
+static xSCRP_motor_t CHARLIE_motor = {
     .pin_pwm = CHARLIEmotorpwm,
     .pin_dir = CHARLIEmotordir,
     .pin_enc = CHARLIEmotorenc,
@@ -70,13 +70,12 @@ xSCRP_motor_t CHARLIE_motor = {
     .pwm_io = MCPWM2A,
     .pwm_unit = MCPWM_UNIT_0,
     .pwm_timer = MCPWM_TIMER_2,
-    .pwm_gen = MCPWM_OPR_A,
+    .pwm_gen = MCPWM_OPR_B,
     .enc_dir = PCNT_COUNT_DEC,
     .enc_unit = PCNT_UNIT_2,
     .enc_channel = PCNT_CHANNEL_0};
 
 // Variables
-
 bool pcnt_isr_installed = false;
 
 // INTERRUPTS
@@ -100,6 +99,7 @@ void SCRP_MovementControl(void *args)
 
     enc_evt_queue = xQueueCreate(10, sizeof(enc_evt_t));
     enc_evt_t evt;
+    portBASE_TYPE res;
 
     ESP_LOGI(MCTAG, "Starting Movement Controller");
     ESP_LOGI(MCTAG, "Setting up motors");
@@ -107,23 +107,34 @@ void SCRP_MovementControl(void *args)
     xMotorSetUp(&BETA_motor);
     xMotorSetUp(&CHARLIE_motor);
 
-    int16_t rxbuff[3];
-    bool running = false;
+    int16_t rxbuff[6];
+    static int16_t alpha_target = 0;
+    static int16_t beta_target = 0;
+    static int16_t charlie_target = 0;
+    static int16_t alpha_speed = 0;
+    static int16_t beta_speed = 0;
+    static int16_t charlie_speed = 0;
+
     while (1)
     {
         // Wait for position instructions
         if (xQueueReceive(xMC_queue, &(rxbuff), portMAX_DELAY))
         {
             // int16_t alpha_target = rxbuff[0];
-            int16_t alpha_target = rxbuff[0];
-            int16_t beta_target = rxbuff[1];
-            int16_t charlie_target = rxbuff[2];
+            ESP_LOGI(MCTAG, "Data Recieved: %d, %d, %d, %d, %d, %d ", rxbuff[0], rxbuff[1], rxbuff[2], rxbuff[3], rxbuff[4], rxbuff[5]);
+            alpha_target = rxbuff[0] - ALPHA_motor.position;
+            beta_target = rxbuff[1] - BETA_motor.position;
+            charlie_target = rxbuff[2] - CHARLIE_motor.position;
+            alpha_speed = rxbuff[3];
+            beta_speed = rxbuff[4];
+            charlie_speed = rxbuff[5];
 
-            ESP_LOGI(MCTAG, "Recieved Data= %d, %d, %d", alpha_target, beta_target, charlie_target);
+            ESP_LOGI(MCTAG, "Setting Enc Target Ticks= %d, %d, %d", alpha_target, beta_target, charlie_target);
             xSetTarget(&ALPHA_motor, alpha_target);
             xSetTarget(&BETA_motor, beta_target);
+            xSetTarget(&CHARLIE_motor, charlie_target);
 
-             ESP_LOGI(MCTAG, "Absolute Position %d, %d, %d", xGetPosition(&ALPHA_motor), xGetPosition(&BETA_motor), xGetPosition(&CHARLIE_motor));
+            ESP_LOGI(MCTAG, "Absolute Position %d, %d, %d", xGetPosition(&ALPHA_motor), xGetPosition(&BETA_motor), xGetPosition(&CHARLIE_motor));
 
             if (alpha_target < 0)
             {
@@ -143,7 +154,7 @@ void SCRP_MovementControl(void *args)
                 ESP_ERROR_CHECK(xSetMotorDir(&BETA_motor, dir_pos));
             }
 
-             if (charlie_target < 0)
+            if (charlie_target < 0)
             {
                 ESP_ERROR_CHECK(xSetMotorDir(&CHARLIE_motor, dir_neg));
             }
@@ -152,52 +163,60 @@ void SCRP_MovementControl(void *args)
                 ESP_ERROR_CHECK(xSetMotorDir(&CHARLIE_motor, dir_pos));
             }
 
-            ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 40));
-            ESP_ERROR_CHECK(xSetMotorSpeed(&ALPHA_motor, 40));
-               ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, 40));
+            ESP_ERROR_CHECK(xSetMotorSpeed(&ALPHA_motor, alpha_speed));
+            ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, beta_speed));
+            ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, charlie_speed));
 
-            while (BETA_motor.moving | ALPHA_motor.moving)
+            while (BETA_motor.moving| ALPHA_motor.moving)// | CHARLIE_motor.moving)
             {
-                if (xQueueReceive(enc_evt_queue, &evt, 1000 / portTICK_PERIOD_MS))
+
+                // ESP_LOGI(MCTAG, "unit = %d", evt.unit);
+                // ESP_LOGI(MCTAG, "number of messages %d", uxQueueMessagesWaiting(enc_evt_queue));
+                res = xQueueReceive(enc_evt_queue, &evt, 1000 / portTICK_PERIOD_MS);
+                // ESP_LOGI(MCTAG, "number of messages %d", uxQueueMessagesWaiting(enc_evt_queue));
+                // ESP_LOGI(MCTAG, "res = %d", res);
+                if (res == pdTRUE)
                 {
 
-                    if (evt.unit == ALPHA_motor.enc_unit)
+                    if ((evt.unit == ALPHA_motor.enc_unit) && ALPHA_motor.moving)
                     {
-                       // ESP_LOGI(MCTAG, "ALPHA:Target Reached: %d, SPEED = %f", xGetEncoderValue(&ALPHA_motor), mcpwm_get_duty(ALPHA_motor.pwm_unit, ALPHA_motor.pwm_timer, ALPHA_motor.pwm_gen));
+                        // ESP_LOGI(MCTAG, "ALPHA:Target Reached: %d, SPEED = %f", xGetEncoderValue(&ALPHA_motor), mcpwm_get_duty(ALPHA_motor.pwm_unit, ALPHA_motor.pwm_timer, ALPHA_motor.pwm_gen));
 
                         ESP_ERROR_CHECK(xStopMotor(&ALPHA_motor));
+                        ESP_ERROR_CHECK(xUpdatePosition(&ALPHA_motor));
 
                         // ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 100));
-                       // ESP_LOGI(MCTAG, "ALPHA:Target Reached: %d, SPEED = %f", xGetEncoderValue(&ALPHA_motor), mcpwm_get_duty(ALPHA_motor.pwm_unit, ALPHA_motor.pwm_timer, ALPHA_motor.pwm_gen));
-                         ESP_LOGI(MCTAG, "ALPHA: Target Reached. ABS Position %d", xGetPosition(&ALPHA_motor));
+                        // ESP_LOGI(MCTAG, "ALPHA:Target Reached: %d, SPEED = %f", xGetEncoderValue(&ALPHA_motor), mcpwm_get_duty(ALPHA_motor.pwm_unit, ALPHA_motor.pwm_timer, ALPHA_motor.pwm_gen));
+                        ESP_LOGI(MCTAG, "ALPHA: Target Reached. ABS Position %d, %d", xGetPosition(&ALPHA_motor), ALPHA_motor.position);
                     }
-                    if (evt.unit == BETA_motor.enc_unit)
+                    if ((evt.unit == BETA_motor.enc_unit) && BETA_motor.moving)
                     {
                         //  ESP_LOGI(MCTAG, "BETA: SPEED = %f", BETA_motor.speed);
-                       // ESP_LOGI(MCTAG, "BETA: Target Reached: %d, SPEED = %f", xGetEncoderValue(&BETA_motor), mcpwm_get_duty(BETA_motor.pwm_unit, BETA_motor.pwm_timer, BETA_motor.pwm_gen));
-
+                        // ESP_LOGI(MCTAG, "BETA: Target Reached: %d, SPEED = %f", xGetEncoderValue(&BETA_motor), mcpwm_get_duty(BETA_motor.pwm_unit, BETA_motor.pwm_timer, BETA_motor.pwm_gen));
+                        // ESP_LOGI(MCTAG, "Evt : %d", evt.status);
                         ESP_ERROR_CHECK(xStopMotor(&BETA_motor));
-
-                        //ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
-                        //ESP_LOGI(MCTAG, "BETA: Target Reached: %d, SPEED = %f", xGetEncoderValue(&BETA_motor), mcpwm_get_duty(BETA_motor.pwm_unit, BETA_motor.pwm_timer, BETA_motor.pwm_gen));
-                         ESP_LOGI(MCTAG, "BETA: Target Reached. ABS Position= %d", xGetPosition(&BETA_motor));
-                     
+                        ESP_ERROR_CHECK(xUpdatePosition(&BETA_motor));
+                        // ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
+                        // ESP_LOGI(MCTAG, "BETA: Target Reached: %d, SPEED = %f", xGetEncoderValue(&BETA_motor), mcpwm_get_duty(BETA_motor.pwm_unit, BETA_motor.pwm_timer, BETA_motor.pwm_gen));
+                        ESP_LOGI(MCTAG, "BETA: Target Reached. ABS Position= %d", BETA_motor.position);
+                    
                     }
 
-                      if (evt.unit == CHARLIE_motor.enc_unit)
+                    if ((evt.unit == CHARLIE_motor.enc_unit) && CHARLIE_motor.moving)
                     {
                         //  ESP_LOGI(MCTAG, "BETA: SPEED = %f", BETA_motor.speed);
-                     
-                        ESP_ERROR_CHECK(xStopMotor(&CHARLIE_motor));
 
-                        //ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
-                        ESP_LOGI(MCTAG, "CHARLIE: Target Reached. ABS Position %d", xGetPosition(&CHARLIE_motor));
-                     
+                        ESP_ERROR_CHECK(xStopMotor(&CHARLIE_motor));
+                        ESP_ERROR_CHECK(xUpdatePosition(&CHARLIE_motor));
+
+                        // ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
+                        ESP_LOGI(MCTAG, "CHARLIE: Target Reached. ABS Position %d, %d", xGetPosition(&CHARLIE_motor), CHARLIE_motor.position);
                     }
+                    res = pdFALSE;
                 } // if
                 else
                 {
-
+                    res = pdFALSE;
                     //  ESP_LOGI(MCTAG, "Current counter value :%d", xGetEncoderValue(&ALPHA_motor));
                 } // else
             }
@@ -218,7 +237,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
         .frequency = PWMFREQUENCY,
         .cmpr_a = SCRP_motor->speed,
         .counter_mode = MCPWM_UP_COUNTER,
-        .duty_mode = MCPWM_DUTY_MODE_0,
+        .duty_mode = MCPWM_DUTY_MODE_1, // change!!!!!!!
     };
 
     mcpwm_init(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, &pwm_config_motor);
@@ -282,6 +301,7 @@ esp_err_t xSetMotorSpeed(struct xSCRP_motor_t *SCRP_motor, float speed)
     SCRP_motor->speed = speed;
     // printf("motor speed= %f\n", SCRP_motor->speed);
     SCRP_motor->moving = true;
+    pcnt_counter_resume(SCRP_motor->enc_unit);
     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, SCRP_motor->speed));
 
     return ESP_OK;
@@ -308,13 +328,15 @@ int16_t xGetEncoderValue(struct xSCRP_motor_t *SCRP_motor)
 {
     int16_t encoder_count;
     pcnt_get_counter_value(SCRP_motor->enc_unit, &encoder_count);
+   // ESP_LOGI(MCTAG, "Get Encoder Value %d", encoder_count);
     return encoder_count;
 }
 
 esp_err_t xStopMotor(struct xSCRP_motor_t *SCRP_motor)
 {
-     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, 0));
-    //ESP_ERROR_CHECK(mcpwm_set_signal_high(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen));
+    ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, 0));
+    // ESP_ERROR_CHECK(mcpwm_set_signal_high(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen));
+    pcnt_counter_pause(SCRP_motor->enc_unit);
     SCRP_motor->moving = false;
     SCRP_motor->speed = 0;
     return ESP_OK;
@@ -322,8 +344,10 @@ esp_err_t xStopMotor(struct xSCRP_motor_t *SCRP_motor)
 
 esp_err_t xResumeMotor(struct xSCRP_motor_t *SCRP_motor)
 {
+    pcnt_counter_resume(SCRP_motor->enc_unit);
     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, SCRP_motor->speed));
     SCRP_motor->moving = false;
+
     return ESP_OK;
 }
 
@@ -331,17 +355,23 @@ esp_err_t xSetTarget(struct xSCRP_motor_t *SCRP_motor, int16_t target)
 {
     // Update absolute position
     // printf("abs position= %d\n", SCRP_motor->position);
-    SCRP_motor->position = SCRP_motor->position + xGetEncoderValue(SCRP_motor);
+    xUpdatePosition(SCRP_motor);
+    //  SCRP_motor->position = SCRP_motor->position + xGetEncoderValue(SCRP_motor);
     // printf("abs position= %d\n", SCRP_motor->position);
     pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, target);
     pcnt_counter_pause(SCRP_motor->enc_unit);
     pcnt_counter_clear(SCRP_motor->enc_unit);
-    pcnt_counter_resume(SCRP_motor->enc_unit);
+    int16_t eventvalue;
+    pcnt_get_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, &eventvalue);
+   // ESP_LOGI(MCTAG, "Set Target %d", eventvalue);
     return ESP_OK;
 }
 
 int16_t xGetPosition(struct xSCRP_motor_t *SCRP_motor)
 {
+
+  //  ESP_LOGI(MCTAG, "Get Position %d", xGetEncoderValue(SCRP_motor));
+
     return (SCRP_motor->position + xGetEncoderValue(SCRP_motor));
 }
 
@@ -351,6 +381,8 @@ esp_err_t xUpdatePosition(struct xSCRP_motor_t *SCRP_motor)
     SCRP_motor->position = SCRP_motor->position + xGetEncoderValue(SCRP_motor);
     // set the new target to home position and clear encoder
     // pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, 0);
+    pcnt_counter_pause(SCRP_motor->enc_unit);
     pcnt_counter_clear(SCRP_motor->enc_unit);
+    //ESP_LOGI(MCTAG, "Updated Position %d", SCRP_motor->position);
     return ESP_OK;
 }

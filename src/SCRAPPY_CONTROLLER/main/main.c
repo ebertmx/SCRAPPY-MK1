@@ -22,7 +22,7 @@ void app_main(void)
 {
     ESP_LOGI(MainTAG, "Initiating Startup: SCRAPPY");
     // SET UP QUEUES
-    xMC_queue = xQueueCreate(10, sizeof(int16_t[3]));
+    xMC_queue = xQueueCreate(10, sizeof(int16_t[6]));
     xPC_queue = xQueueCreate(10, sizeof(int16_t));
     xLC_queue = xQueueCreate(10, sizeof(uint32_t));
 
@@ -38,16 +38,17 @@ void app_main(void)
     //vTaskResume(Handle_PositionControl);
     ESP_LOGI(MainTAG, "Calibration Success");
 
-    int16_t myposition1[] = {-100, -100, 0};
+    int16_t myposition1[] = {-100, -100, 0, 40, 40, 40};
 
-   int16_t myposition2[] = {100, 100, 0};
+   int16_t myposition2[] = {100, 100, 0, 60, 60, 60};
     while(1){
-    xQueueSendToBack(xMC_queue, (void *)&(myposition2), 0);
-    vTaskDelay(2000 / portTICK_RATE_MS);
+    xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
+    vTaskDelay(4000 / portTICK_RATE_MS);
+    //  myposition1[1]-= 100;
 
-    xQueueSendToBack(xMC_queue, (void *)&(myposition1), 0);
-       vTaskDelay(2000 / portTICK_RATE_MS);
+    xQueueSendToBack(xMC_queue, (void *)&(myposition1),  portMAX_DELAY);
+       vTaskDelay(4000 / portTICK_RATE_MS);
      //  ESP_LOGI(MCTAG, "ASHTON, I sent this...");
-       vTaskDelay(1000 / portTICK_RATE_MS);
+   //  myposition2[1]+= 100;
     }
 }
