@@ -14,9 +14,15 @@
 
 static const char *MainTAG = "MainProgram";
 
-#include "local_control.h"
+//#include "local_control.h"
 #include "movement_control.h"
-#include "position_control.h"
+//#include "position_control.h"
 
 #define INCLUDE_vTaskSuspend 1
 
+
+
+#define pin1 23
+#define pin2 2
+#define pin3 22
+#define GPIO_BIT_MASK (1ULL<<GPIO_NUM_22)//(1ULL << GPIO_NUM_23)|

@@ -1,4 +1,4 @@
-/* * Data converted from C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CALIBRATION/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

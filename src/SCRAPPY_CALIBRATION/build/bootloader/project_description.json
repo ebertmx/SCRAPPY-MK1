@@ -1,8 +1,8 @@
 {
     "project_name":       "bootloader",
     "project_path":       "C:/Users/ebert/esp/esp-idf/components/bootloader/subproject",
-    "build_dir":          "C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/bootloader",
-    "config_file":        "C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/sdkconfig",
+    "build_dir":          "C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CALIBRATION/build/bootloader",
+    "config_file":        "C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CALIBRATION/sdkconfig",
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",

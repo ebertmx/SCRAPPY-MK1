@@ -32,7 +32,7 @@ static xSCRP_motor_t ALPHA_motor = {
     .pin_pwm = ALPHAmotorpwm,
     .pin_dir = ALPHAmotordir,
     .pin_enc = ALPHAmotorenc,
-    .speed = 100,
+    .speed = 0,
     .direction = 0,
     .position = 0,
     .moving = false,
@@ -48,7 +48,7 @@ static xSCRP_motor_t BETA_motor = {
     .pin_pwm = BETAmotorpwm,
     .pin_dir = BETAmotordir,
     .pin_enc = BETAmotorenc,
-    .speed = 100,
+    .speed = 0,
     .direction = 0,
     .position = 0,
     .moving = false,
@@ -114,6 +114,7 @@ void SCRP_MovementControl(void *args)
     static int16_t alpha_speed = 0;
     static int16_t beta_speed = 0;
     static int16_t charlie_speed = 0;
+   // BETA_motor.position = 0;
 
     while (1)
     {
@@ -167,7 +168,7 @@ void SCRP_MovementControl(void *args)
             ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, beta_speed));
             ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, charlie_speed));
 
-            while (BETA_motor.moving| ALPHA_motor.moving)// | CHARLIE_motor.moving)
+            while (BETA_motor.moving)//| ALPHA_motor.moving)// | CHARLIE_motor.moving)
             {
 
                 // ESP_LOGI(MCTAG, "unit = %d", evt.unit);
@@ -237,7 +238,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
         .frequency = PWMFREQUENCY,
         .cmpr_a = SCRP_motor->speed,
         .counter_mode = MCPWM_UP_COUNTER,
-        .duty_mode = MCPWM_DUTY_MODE_1, // change!!!!!!!
+        .duty_mode = MCPWM_DUTY_MODE_0, // change!!!!!!!
     };
 
     mcpwm_init(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, &pwm_config_motor);
@@ -288,7 +289,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
     }
     pcnt_isr_handler_add(SCRP_motor->enc_unit, encoder_isr_handler, (void *)SCRP_motor->enc_unit);
     /* Everything is set up, now go to counting */
-    pcnt_counter_resume(SCRP_motor->enc_unit);
+    //pcnt_counter_resume(SCRP_motor->enc_unit);
 
     // set up direction and speed
     ESP_ERROR_CHECK(xSetMotorDir(SCRP_motor, SCRP_motor->direction));
@@ -335,10 +336,11 @@ int16_t xGetEncoderValue(struct xSCRP_motor_t *SCRP_motor)
 esp_err_t xStopMotor(struct xSCRP_motor_t *SCRP_motor)
 {
     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, 0));
-    // ESP_ERROR_CHECK(mcpwm_set_signal_high(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen));
+    //ESP_ERROR_CHECK(mcpwm_set_signal_high(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen));
     pcnt_counter_pause(SCRP_motor->enc_unit);
     SCRP_motor->moving = false;
     SCRP_motor->speed = 0;
+   // ESP_LOGI(MCTAG,"STOPPED MOTOR = %f", SCRP_motor->speed);
     return ESP_OK;
 }
 
@@ -363,14 +365,14 @@ esp_err_t xSetTarget(struct xSCRP_motor_t *SCRP_motor, int16_t target)
     pcnt_counter_clear(SCRP_motor->enc_unit);
     int16_t eventvalue;
     pcnt_get_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, &eventvalue);
-   // ESP_LOGI(MCTAG, "Set Target %d", eventvalue);
+   //ESP_LOGI(MCTAG, "Set Target %d", eventvalue);
     return ESP_OK;
 }
 
 int16_t xGetPosition(struct xSCRP_motor_t *SCRP_motor)
 {
 
-  //  ESP_LOGI(MCTAG, "Get Position %d", xGetEncoderValue(SCRP_motor));
+   // ESP_LOGI(MCTAG, "Get Position %d", xGetEncoderValue(SCRP_motor));
 
     return (SCRP_motor->position + xGetEncoderValue(SCRP_motor));
 }
@@ -383,6 +385,6 @@ esp_err_t xUpdatePosition(struct xSCRP_motor_t *SCRP_motor)
     // pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, 0);
     pcnt_counter_pause(SCRP_motor->enc_unit);
     pcnt_counter_clear(SCRP_motor->enc_unit);
-    //ESP_LOGI(MCTAG, "Updated Position %d", SCRP_motor->position);
+   // ESP_LOGI(MCTAG, "Updated Position %d", SCRP_motor->position);
     return ESP_OK;
 }
