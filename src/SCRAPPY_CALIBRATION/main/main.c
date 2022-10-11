@@ -95,8 +95,8 @@ void app_main(void)
       vTaskDelay(1000 / portTICK_RATE_MS);
       while (gpio_get_level(22))
       {
-        myposition3[1] += -15;
-        myposition3[0] += 10;
+        myposition3[1] += 15;
+        myposition3[0] += -10;
         xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
       }
       ESP_LOGE(MainTAG, "Counting Ticks");
@@ -104,8 +104,8 @@ void app_main(void)
       vTaskDelay(1000 / portTICK_RATE_MS);
       while (gpio_get_level(22))
       {
-        myposition3[1] += 15;
-        myposition3[0] += -10;
+        myposition3[1] += -15;
+        myposition3[0] += 10;
         xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
         count = count + 1;
       }
