@@ -69,7 +69,5 @@ C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/perfmon/libperfmon.a
 C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/spiffs/libspiffs.a
 C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/ulp/libulp.a
 C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/wifi_provisioning/libwifi_provisioning.a
-C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/position_control/libposition_control.a
 C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/movement_control/libmovement_control.a
-C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/local_control/liblocal_control.a
 C:/GITHUB/SCRAPPY-MK1/src/SCRAPPY_CONTROLLER/build/esp-idf/main/libmain.a

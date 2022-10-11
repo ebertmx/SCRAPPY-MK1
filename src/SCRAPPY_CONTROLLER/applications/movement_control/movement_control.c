@@ -77,6 +77,7 @@ static xSCRP_motor_t CHARLIE_motor = {
 
 // Variables
 bool pcnt_isr_installed = false;
+bool calibration = false;
 
 // INTERRUPTS
 static void IRAM_ATTR encoder_isr_handler(void *arg)
@@ -114,6 +115,14 @@ void SCRP_MovementControl(void *args)
     static int16_t alpha_speed = 0;
     static int16_t beta_speed = 0;
     static int16_t charlie_speed = 0;
+
+    res = xQueueReceive(xMC_queue, &(rxbuff), portMAX_DELAY);
+    ALPHA_motor.position = rxbuff[0];
+    BETA_motor.position = rxbuff[1];
+    CHARLIE_motor.position = rxbuff[2];
+    xQueueReset(xMC_queue);
+    calibration = true;
+
 
     while (1)
     {
@@ -167,7 +176,7 @@ void SCRP_MovementControl(void *args)
             ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, beta_speed));
             ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, charlie_speed));
 
-            while (BETA_motor.moving| ALPHA_motor.moving)// | CHARLIE_motor.moving)
+            while (BETA_motor.moving )//| ALPHA_motor.moving) // | CHARLIE_motor.moving)
             {
 
                 // ESP_LOGI(MCTAG, "unit = %d", evt.unit);
@@ -199,7 +208,6 @@ void SCRP_MovementControl(void *args)
                         // ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
                         // ESP_LOGI(MCTAG, "BETA: Target Reached: %d, SPEED = %f", xGetEncoderValue(&BETA_motor), mcpwm_get_duty(BETA_motor.pwm_unit, BETA_motor.pwm_timer, BETA_motor.pwm_gen));
                         ESP_LOGI(MCTAG, "BETA: Target Reached. ABS Position= %d", BETA_motor.position);
-                    
                     }
 
                     if ((evt.unit == CHARLIE_motor.enc_unit) && CHARLIE_motor.moving)
@@ -328,7 +336,7 @@ int16_t xGetEncoderValue(struct xSCRP_motor_t *SCRP_motor)
 {
     int16_t encoder_count;
     pcnt_get_counter_value(SCRP_motor->enc_unit, &encoder_count);
-   // ESP_LOGI(MCTAG, "Get Encoder Value %d", encoder_count);
+    // ESP_LOGI(MCTAG, "Get Encoder Value %d", encoder_count);
     return encoder_count;
 }
 
@@ -363,14 +371,14 @@ esp_err_t xSetTarget(struct xSCRP_motor_t *SCRP_motor, int16_t target)
     pcnt_counter_clear(SCRP_motor->enc_unit);
     int16_t eventvalue;
     pcnt_get_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, &eventvalue);
-   // ESP_LOGI(MCTAG, "Set Target %d", eventvalue);
+    // ESP_LOGI(MCTAG, "Set Target %d", eventvalue);
     return ESP_OK;
 }
 
 int16_t xGetPosition(struct xSCRP_motor_t *SCRP_motor)
 {
 
-  //  ESP_LOGI(MCTAG, "Get Position %d", xGetEncoderValue(SCRP_motor));
+    //  ESP_LOGI(MCTAG, "Get Position %d", xGetEncoderValue(SCRP_motor));
 
     return (SCRP_motor->position + xGetEncoderValue(SCRP_motor));
 }
@@ -383,6 +391,6 @@ esp_err_t xUpdatePosition(struct xSCRP_motor_t *SCRP_motor)
     // pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, 0);
     pcnt_counter_pause(SCRP_motor->enc_unit);
     pcnt_counter_clear(SCRP_motor->enc_unit);
-    //ESP_LOGI(MCTAG, "Updated Position %d", SCRP_motor->position);
+    // ESP_LOGI(MCTAG, "Updated Position %d", SCRP_motor->position);
     return ESP_OK;
 }

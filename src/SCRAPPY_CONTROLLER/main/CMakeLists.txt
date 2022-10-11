@@ -7,6 +7,4 @@ idf_component_register(SRCS "main.c"
                     esp_event
                     nvs_flash
                     movement_control
-                    position_control
-                    local_control
-                  )
+                        )

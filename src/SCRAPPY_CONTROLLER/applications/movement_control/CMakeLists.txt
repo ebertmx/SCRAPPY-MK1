@@ -6,5 +6,5 @@ idf_component_register(SRCS ${SOURCES}
                         esp_common 
                         esp_event
                         nvs_flash
-                        position_control
+                  
                 )

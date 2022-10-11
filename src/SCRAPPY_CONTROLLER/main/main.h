@@ -14,9 +14,8 @@
 
 static const char *MainTAG = "MainProgram";
 
-#include "local_control.h"
 #include "movement_control.h"
-#include "position_control.h"
+
 
 #define INCLUDE_vTaskSuspend 1
 
