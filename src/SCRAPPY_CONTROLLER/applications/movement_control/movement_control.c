@@ -227,16 +227,16 @@ void SCRP_MovementControl(void *args)
                 else
                 {
                     res = pdFALSE;
-                    int16_t BETAenc_temp = xGetEncoderValue(&BETA_motor);
-                    if ((BETAenc_temp - BETAenc_prev) > 0)
-                    {
+                    // int16_t BETAenc_temp = xGetEncoderValue(&BETA_motor);
+                    // if ((BETAenc_temp - BETAenc_prev) > 0)
+                    // {
 
-                        if (dir_neg == BETA_motor.direction)
-                        {
-                            xSetMotorDir(&BETA_motor, dir_pos);
-                        }
-                    }
-                    BETAenc_prev = BETAenc_temp;
+                    //     if (dir_neg == BETA_motor.direction)
+                    //     {
+                    //         xSetMotorDir(&BETA_motor, dir_pos);
+                    //     }
+                    // }
+                    // BETAenc_prev = BETAenc_temp;
                     //  ESP_LOGI(MCTAG, "Current counter value :%d", xGetEncoderValue(&ALPHA_motor));
                 } // else
             }
@@ -257,7 +257,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
         .frequency = PWMFREQUENCY,
         .cmpr_a = SCRP_motor->speed,
         .counter_mode = MCPWM_UP_COUNTER,
-        .duty_mode = MCPWM_DUTY_MODE_1, // change!!!!!!!
+        .duty_mode = MCPWM_DUTY_MODE_0, // change!!!!!!!
     };
 
     mcpwm_init(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, &pwm_config_motor);
@@ -319,7 +319,7 @@ esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor)
 esp_err_t xSetMotorSpeed(struct xSCRP_motor_t *SCRP_motor, float speed)
 {
     SCRP_motor->speed = speed;
-    printf("motor speed= %f\n", SCRP_motor->speed);
+    //printf("motor speed= %f\n", SCRP_motor->speed);
     SCRP_motor->moving = true;
     pcnt_counter_resume(SCRP_motor->enc_unit);
     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, SCRP_motor->speed));

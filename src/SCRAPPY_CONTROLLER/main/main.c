@@ -183,6 +183,8 @@ void wifi_init_sta(void)
 
 void app_main(void)
 {
+
+  esp_log_level_set("*", ESP_LOG_NONE);//disables logging
   ESP_LOGI(MainTAG, "Initiating Startup: SCRAPPY");
 
   // SET UP NETWORK
