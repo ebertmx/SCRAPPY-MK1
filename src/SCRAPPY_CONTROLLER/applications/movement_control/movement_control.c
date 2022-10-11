@@ -106,7 +106,7 @@ void SCRP_MovementControl(void *args)
     ESP_LOGI(MCTAG, "Setting up motors");
     xMotorSetUp(&ALPHA_motor);
     xMotorSetUp(&BETA_motor);
-    xMotorSetUp(&CHARLIE_motor);
+   // xMotorSetUp(&CHARLIE_motor);
 
     int16_t rxbuff[6];
     static int16_t alpha_target = 0;
@@ -120,16 +120,16 @@ void SCRP_MovementControl(void *args)
     res = xQueueReceive(xMC_queue, &(rxbuff), portMAX_DELAY);
     ALPHA_motor.position = rxbuff[0];
     BETA_motor.position = rxbuff[1];
-    CHARLIE_motor.position = rxbuff[2];
+   // CHARLIE_motor.position = rxbuff[2];
     xQueueReset(xMC_queue);
     calibration = true;
-    ESP_LOGE(MCTAG, "RX1 = %d", rxbuff[1]);
+   // ESP_LOGE(MCTAG, "RX1 = %d", rxbuff[1]);
     ESP_LOGI(MCTAG, "CALIBRATION SUCCESSFUL");
 
     //SET EVERYTHING OFF AND TO ZERO
     xStopMotor(&ALPHA_motor);
     xStopMotor(&BETA_motor);
-    xStopMotor(&CHARLIE_motor);
+  //  xStopMotor(&CHARLIE_motor);
     pcnt_counter_clear(ALPHA_motor.enc_unit);
     pcnt_counter_clear(BETA_motor.enc_unit);
     pcnt_counter_clear(CHARLIE_motor.enc_unit);
@@ -153,7 +153,7 @@ void SCRP_MovementControl(void *args)
             ESP_LOGI(MCTAG, "Setting Enc Target Ticks= %d, %d, %d", alpha_target, beta_target, charlie_target);
             xSetTarget(&ALPHA_motor, alpha_target);
             xSetTarget(&BETA_motor, beta_target);
-            xSetTarget(&CHARLIE_motor, charlie_target);
+          //  xSetTarget(&CHARLIE_motor, charlie_target);
 
             ESP_LOGI(MCTAG, "Absolute Position %d, %d, %d", xGetPosition(&ALPHA_motor), xGetPosition(&BETA_motor), xGetPosition(&CHARLIE_motor));
 
@@ -188,7 +188,7 @@ void SCRP_MovementControl(void *args)
             ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, beta_speed));
             ESP_ERROR_CHECK(xSetMotorSpeed(&CHARLIE_motor, charlie_speed));
 
-            while (BETA_motor.moving) // | ALPHA_motor.moving) // | CHARLIE_motor.moving)
+            while (BETA_motor.moving | ALPHA_motor.moving) // | CHARLIE_motor.moving)
             {
 
                 // ESP_LOGI(MCTAG, "unit = %d", evt.unit);
@@ -222,16 +222,16 @@ void SCRP_MovementControl(void *args)
                         ESP_LOGI(MCTAG, "BETA: Target Reached. ABS Position= %d", BETA_motor.position);
                     }
 
-                    if ((evt.unit == CHARLIE_motor.enc_unit) && CHARLIE_motor.moving)
-                    {
-                        //  ESP_LOGI(MCTAG, "BETA: SPEED = %f", BETA_motor.speed);
+                    // if ((evt.unit == CHARLIE_motor.enc_unit) && CHARLIE_motor.moving)
+                    // {
+                    //     //  ESP_LOGI(MCTAG, "BETA: SPEED = %f", BETA_motor.speed);
 
-                        ESP_ERROR_CHECK(xStopMotor(&CHARLIE_motor));
-                        ESP_ERROR_CHECK(xUpdatePosition(&CHARLIE_motor));
+                    //     ESP_ERROR_CHECK(xStopMotor(&CHARLIE_motor));
+                    //     ESP_ERROR_CHECK(xUpdatePosition(&CHARLIE_motor));
 
-                        // ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
-                        ESP_LOGI(MCTAG, "CHARLIE: Target Reached. ABS Position %d, %d", xGetPosition(&CHARLIE_motor), CHARLIE_motor.position);
-                    }
+                    //     // ESP_ERROR_CHECK(xSetMotorSpeed(&BETA_motor, 50));
+                    //     ESP_LOGI(MCTAG, "CHARLIE: Target Reached. ABS Position %d, %d", xGetPosition(&CHARLIE_motor), CHARLIE_motor.position);
+                    // }
                     res = pdFALSE;
                 } // if
                 else
