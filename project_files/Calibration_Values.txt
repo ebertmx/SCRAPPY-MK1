@@ -1,5 +1,9 @@
 Motor 1 Range: 1790
 negative is down
+sensor 1 range: 27
+
+
 
 Motor 2 Range: 2360 ticks
 negative is up
+sensor range 2: 53
