@@ -19,6 +19,7 @@ class ArmServer:
         self.client = None
         self.addr = None
         self.server_thread = None
+        self.arm_calibrated = True
 
 
     def __enter__(self):

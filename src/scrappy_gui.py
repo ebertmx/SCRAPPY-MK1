@@ -15,14 +15,14 @@ control_column = [
     [sg.Text("Controls", font=("Arial", 20))],
     [sg.HSeparator(pad=(5, (3, 20)))],
     [sg.Text("Motor A", font=("Arial", 15))],
-    [sg.Text("Position"), sg.Input(key="a-position", do_not_clear=False), sg.Text("Speed"), sg.Input(key="a-speed", do_not_clear=False)],
+    [sg.Text("Position"), sg.Input(key="a-position"), sg.Text("Speed"), sg.Input(key="a-speed")],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
     [sg.Text("Motor B", font=("Arial", 15))],
-    [sg.Text("Position"), sg.Input(key="b-position", do_not_clear=False), sg.Text("Speed"), sg.Input(key="b-speed", do_not_clear=False)],
+    [sg.Text("Position"), sg.Input(key="b-position"), sg.Text("Speed"), sg.Input(key="b-speed")],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
     [sg.Text("Motor C", font=("Arial", 15))],
-    [sg.Text("Position"), sg.Input(key="c-position", do_not_clear=False), sg.Text("Speed"), sg.Input(key="c-speed", do_not_clear=False)],
-    [sg.Button("Submit", key="motor-submit")],
+    [sg.Text("Position"), sg.Input(key="c-position"), sg.Text("Speed"), sg.Input(key="c-speed")],
+    [sg.Button("Submit", key="motor-submit"), sg.Button("Calibrate", key="calibrate"), sg.Button("Test", key="test")],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
     [sg.Text(size=(43, 15), key='cmd-output', background_color='black', text_color='green')],
     [sg.InputText(key='cmd-input', size=(49, 3), do_not_clear=False)]
@@ -61,9 +61,22 @@ def handle_event(ev, v, s):
         s.start()
     elif ev == 'disconnect':
         s.disconnect()
-    elif ev == 'motor-submit':
+    elif ev == "calibrate":
         command = f"move:{v['a-position']},{v['b-position']},{v['c-position']},{v['a-speed']},{v['b-speed']},{v['c-speed']}"
-        print(command)
+        if ",," in command or len(v['a-position']) == 0 or len(v["c-speed"]) == 0:
+            s.print_to_element(f"Invalid move arguments {command}", "cmd-output")
+        s.send_command(command)
+        s.arm_calibrated = True
+    elif ev == 'motor-submit':
+        if not s.arm_calibrated:
+            s.print_to_element("Not calibrated", "cmd-output")
+            return
+        command = f"move:{v['a-position']},{v['b-position']},{v['c-position']},{v['a-speed']},{v['b-speed']},{v['c-speed']}"
+        if ",," in command or len(v['a-position']) == 0 or len(v["c-speed"]) == 0:
+            s.print_to_element(f"Invalid move arguments {command}", "cmd-output")
+        s.send_command(command)
+    elif ev =="test":
+        command = "move:100,100,100,30,30,30"
         s.send_command(command)
 
     else:
