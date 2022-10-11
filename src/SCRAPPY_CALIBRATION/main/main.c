@@ -6,7 +6,7 @@
 #include "main.h"
 
 // GLOBALS
-bool calibration = false;
+//bool calibration = false;
 
 // Task Handles and Queues
 TaskHandle_t Handle_MovementControl = NULL;
@@ -62,8 +62,7 @@ void app_main(void)
   ESP_LOGI(MainTAG, "Initiating Startup: SCRAPPY");
   // SET UP QUEUES
   xMC_queue = xQueueCreate(1, sizeof(int16_t[6]));
-  // xPC_queue = xQueueCreate(10, sizeof(int16_t));
-  // xLC_queue = xQueueCreate(1, sizeof(uint32_t));
+ 
 
   // CREATE TASKS
   ESP_LOGI(MainTAG, "Starting Tasks");
@@ -72,15 +71,15 @@ void app_main(void)
   //
 
   gpio_initiate();
-  ESP_LOGI(MainTAG, "Calibrating");
-  calibration = true;
-  // vTaskResume(Handle_PositionControl);
-  ESP_LOGI(MainTAG, "Calibration Success");
-  uint32_t pin;
+  // ESP_LOGI(MainTAG, "Calibrating");
+  // calibration = true;
+
+  // ESP_LOGI(MainTAG, "Calibration Success");
+  // uint32_t pin;
   int count = 0;
   int16_t ticks;
 
-  int16_t myposition3[] = {0, 10, 0, 0, 100, 0};
+  int16_t myposition3[] = {0, 0, 0, 0, 100, 0};
 
   // xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
   // while(1){
@@ -90,22 +89,23 @@ void app_main(void)
   ESP_LOGE(MainTAG, "Press Button When Ready");
   while (1)
   {
-
     if (!gpio_get_level(22))
     {
-      //   ESP_LOGE(MainTAG, "Moving To Start");
-      //   vTaskDelay(1000 / portTICK_RATE_MS);
-      //   while (gpio_get_level(22))
-      //   {
-      //     myposition3[1] += 10;
-      //     xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
-      //   }
+      ESP_LOGE(MainTAG, "Moving To Start");
+      vTaskDelay(1000 / portTICK_RATE_MS);
+      while (gpio_get_level(22))
+      {
+        myposition3[1] += -15;
+        myposition3[0] += 10;
+        xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
+      }
       ESP_LOGE(MainTAG, "Counting Ticks");
       count = 0;
       vTaskDelay(1000 / portTICK_RATE_MS);
       while (gpio_get_level(22))
       {
-        myposition3[1] += 10;
+        myposition3[1] += 15;
+        myposition3[0] += -10;
         xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
         count = count + 1;
       }

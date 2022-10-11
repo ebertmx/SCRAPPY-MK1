@@ -1,0 +1,5 @@
+Motor 1 Range: 1790
+negative is down
+
+Motor 2 Range: 2360 ticks
+negative is up
