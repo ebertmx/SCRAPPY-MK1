@@ -184,7 +184,7 @@ void wifi_init_sta(void)
 void app_main(void)
 {
 
-  esp_log_level_set("*", ESP_LOG_NONE);//disables logging
+ // esp_log_level_set("*", ESP_LOG_NONE);//disables logging
   ESP_LOGI(MainTAG, "Initiating Startup: SCRAPPY");
 
   // SET UP NETWORK
@@ -213,7 +213,7 @@ void app_main(void)
   xMC_queue = xQueueCreate(10, sizeof(int16_t[6]));
 
   // CREATE TASKS
-  ESP_LOGI(MainTAG, "Starting Tasks");
+  ESP_LOGI(MainTAG, "Movement Task");
   xTaskCreatePinnedToCore(SCRP_MovementControl, "MC", 4096, NULL, 10, &Handle_MovementControl, 1);
 
   // POINTS
@@ -222,21 +222,23 @@ void app_main(void)
   int16_t myposition2[] = {100, 100, 0, 60, 30, 60};
 
   // CALIBRATION
-  xQueueSendToBack(xMC_queue, (void *)&(myposition0), portMAX_DELAY);
-  while (!calibration)
-  {
-    ESP_LOGI(MainTAG, "CALIBRATING");
-    vTaskDelay(100 / portTICK_RATE_MS);
-  }
+  // xQueueSendToBack(xMC_queue, (void *)&(myposition0), portMAX_DELAY);
+  // while (!calibration)
+  // {
+  //   ESP_LOGI(MainTAG, "CALIBRATING");
+  //   vTaskDelay(100 / portTICK_RATE_MS);
+  // }
 
-  ESP_LOGI(MainTAG, "CALIBRATION SUCCESS");
-  vTaskDelay(1000 / portTICK_RATE_MS);
+  // ESP_LOGI(MainTAG, "CALIBRATION SUCCESS");
+  // vTaskDelay(1000 / portTICK_RATE_MS);
 
   char command[128];
   char args[16][16];
   int16_t intArgs[6];
   int numArgs = 0;
-ESP_LOGI(MainTAG, "Starting command loop");
+
+ESP_LOGI(MainTAG, "Starting Main Task");
+
   while (1)
   {
 
@@ -256,7 +258,7 @@ ESP_LOGI(MainTAG, "Starting command loop");
       }
       for (int i = 0; i < numArgs; i++)
       {
-        ESP_LOGI(MainTAG, "%d\n", intArgs[i]);
+       // ESP_LOGI(MainTAG, "%d\n", intArgs[i]);
       }
     }
     // xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
