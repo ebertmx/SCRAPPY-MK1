@@ -79,24 +79,27 @@ void app_main(void)
   uint32_t pin;
   int count = 0;
   int16_t ticks;
-  int16_t myposition1[] = {-10, 0, 0, 30, 0, 0};
 
-  int16_t myposition2[] = {10, 0, 0, 30, 0, 0};
-  int16_t myposition3[] = {0, -10, 0, 0, 30, 0};
-  int16_t myposition4[] = {0, 10, 0, 0, 30, 0};
+  int16_t myposition3[] = {0, 10, 0, 0, 100, 0};
+
+  // xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
+  // while(1){
+  //   ESP_LOGI(MainTAG,"DONE");
+  //   vTaskDelay(1000 / portTICK_RATE_MS);
+  // }
   ESP_LOGE(MainTAG, "Press Button When Ready");
   while (1)
   {
 
     if (!gpio_get_level(22))
     {
-      ESP_LOGE(MainTAG, "Moving To Start");
-      vTaskDelay(1000 / portTICK_RATE_MS);
-      while (gpio_get_level(22))
-      {
-        myposition3[1] += -10;
-        xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
-      }
+      //   ESP_LOGE(MainTAG, "Moving To Start");
+      //   vTaskDelay(1000 / portTICK_RATE_MS);
+      //   while (gpio_get_level(22))
+      //   {
+      //     myposition3[1] += 10;
+      //     xQueueSendToBack(xMC_queue, (void *)&(myposition3), portMAX_DELAY);
+      //   }
       ESP_LOGE(MainTAG, "Counting Ticks");
       count = 0;
       vTaskDelay(1000 / portTICK_RATE_MS);
@@ -108,9 +111,9 @@ void app_main(void)
       }
       ticks = count * 10;
       ESP_LOGE(MainTAG, "TICKs COUNT = %d", ticks);
-       vTaskDelay(2000 / portTICK_RATE_MS);
+      vTaskDelay(2000 / portTICK_RATE_MS);
     }
-count = count+1;
-     vTaskDelay(1);
+    // count = count + 1;
+    vTaskDelay(1);
   }
 }
