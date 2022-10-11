@@ -3,7 +3,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "sdkconfig.h"
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <netdb.h>            // struct addrinfo
+#include <arpa/inet.h>
+#include "esp_netif.h"
+#include "esp_log.h"
 #include "main.h"
+#include "fcntl.h"
+
+
+
+#define HOST_IP_ADDR "192.168.1.72"
+#define PORT 9999
+
+#define MAX_ARG_LENGTH 16
+
 
 // GLOBALS
 extern bool calibration;
@@ -19,6 +37,65 @@ TaskHandle_t Handle_LocalControl = NULL;
 extern QueueHandle_t xLC_queue;
 
 // WIFI
+void tcp_client(void);
+
+void convertToInts(char args[16][16], int numArgs, int intArgs[]){
+    char* ptr;
+    for(int i = 0; i < numArgs; i++){
+        intArgs[i] = strtol(args[i], &ptr, 10);
+    }
+}
+
+int parseCommand(char* command, int len, char args[][16]){
+  int parseArgs = 0;
+  int curArg = 0;
+  int argIndex = 0;
+  char c;
+  for(int i = 0; i < len; i++){
+    c = command[i];
+    if(c == ':'){
+      command[i] = '\0';
+      parseArgs = 1;
+      continue;
+    }
+    if(parseArgs){
+      if(c == ','){
+        curArg++;
+        argIndex = 0;
+        continue;
+      }
+      args[curArg][argIndex++] = c;
+    }
+  }
+  return curArg + parseArgs;
+}
+
+int connect_to_server() {
+    char host_ip[] = HOST_IP_ADDR;
+    int addr_family = 0;
+    int ip_protocol = 0;
+    struct sockaddr_in dest_addr;
+    inet_pton(AF_INET, host_ip, &dest_addr.sin_addr);
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(PORT);
+    addr_family = AF_INET;
+    ip_protocol = IPPROTO_IP;
+
+
+    int sock =  socket(addr_family, SOCK_STREAM, 0);
+    int flags = fcntl(sock, F_GETFL);
+    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        return -1;
+    }
+    ESP_LOGI(TAG, "Socket created, connecting to %s:%d", host_ip, PORT);
+
+    int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+
+    return sock;
+
+}
 
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
@@ -135,6 +212,13 @@ void app_main(void)
 
   ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
   wifi_init_sta();
+  int sock = connect_to_server();
+  if(sock < 0) {
+    ESP_LOGE(MainTAG, "Connection to server failed");
+  } else {
+    ESP_LOGI(MainTAG, "Connection successful");
+  }
+
 
   // SET UP QUEUES
   xMC_queue = xQueueCreate(10, sizeof(int16_t[6]));
@@ -153,8 +237,30 @@ void app_main(void)
   int16_t myposition1[] = {-100, -100, 0, 40, 40, 40};
 
   int16_t myposition2[] = {100, 100, 0, 60, 60, 60};
+
+  char command[128];
+  char args[16][16];
+  int intArgs[16];
+  int numArgs = 0;
+  
   while (1)
   {
+    ESP_LOGI(MainTAG, "Starting command loop");
+    int len = recv(sock, command, sizeof(command) - 1, 0);
+    ESP_LOGI(MainTAG, "len: %d", len);
+    if (len > 0) {
+      command[len] = 0; // Null-terminate whatever we received and treat like a string
+      ESP_LOGI(MainTAG, "Received %d bytes from %s:", len, HOST_IP_ADDR);
+      ESP_LOGI(MainTAG, "%s", command);
+      numArgs = parseCommand(command, len, args);
+      if(strcmp(command, "move") == 0){
+        convertToInts(args, numArgs, intArgs);
+      }
+      for(int i = 0; i < numArgs; i++){
+        ESP_LOGI(MainTAG, "%d\n", intArgs[i]);
+      }
+
+    }
     xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
     vTaskDelay(4000 / portTICK_RATE_MS);
 
@@ -162,3 +268,37 @@ void app_main(void)
     vTaskDelay(4000 / portTICK_RATE_MS);
   }
 }
+
+// void tcp_client(void)
+// {
+
+//         if (err != 0) {
+//             ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
+//             break;
+//         }
+//         ESP_LOGI(TAG, "Successfully connected");
+//         char* payload = "Test data";
+
+//         while (1) {
+//             int err = send(sock, payload, strlen(payload), 0);
+//             if (err < 0) {
+//                 ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+//                 break;
+//             }
+//             // Error occurred during receiving
+//             if (len < 0) {
+//                 ESP_LOGE(TAG, "recv failed: errno %d", errno);
+//                 break;
+//             }
+//             // Data received
+//             else {
+
+//             }
+//         }
+
+//         if (sock != -1) {
+//             ESP_LOGE(TAG, "Shutting down socket and restarting...");
+//             shutdown(sock, 0);
+//             close(sock);
+//         }
+// }

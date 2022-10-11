@@ -1,7 +1,6 @@
 import socket
 import threading
 
-import cv2 as cv
 
 CMD_PORT = 9999
 CAMERA_PORT = 9998
