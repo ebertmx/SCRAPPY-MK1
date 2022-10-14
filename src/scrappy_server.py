@@ -1,7 +1,6 @@
 import socket
 import threading
 
-import cv2 as cv
 
 CMD_PORT = 9999
 CAMERA_PORT = 9998
@@ -20,6 +19,7 @@ class ArmServer:
         self.client = None
         self.addr = None
         self.server_thread = None
+        self.arm_calibrated = True
 
 
     def __enter__(self):
