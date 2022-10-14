@@ -5,6 +5,5 @@ idf_component_register(SRCS ${SOURCES}
                         REQUIRES freertos 
                         esp_common 
                         esp_event
-                        nvs_flash
-                  
+                        nvs_flash    
                 )

@@ -1,64 +1,71 @@
+
 // INCLUDE LIBRARIES
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "esp_attr.h"
+#include "esp_system.h"
+#include "esp_event.h"
+#include "soc/rtc.h"
 #include "soc/rtc.h"
 #include "esp_log.h"
+#include "string.h"
 
 #include "driver/mcpwm.h"
 #include "soc/mcpwm_periph.h"
 #include "driver/gpio.h"
 #include "driver/pcnt.h"
 
-// INCLUDE HEADERS
+/****************TAGS*****************/
+static const char *MC = "MC";
+static const char *MCSTOP = "MC-STOP";
+static const char *MCRUN = "MC-RUN";
+static const char *MCSET = "MC-SET";
+static const char *MCMOTORS = "MC-MOTOR";
 
-// CONSTANTS
+/**********MOTOR CONSTANTS************/
 #define motorHlimit 30000
 #define motorLlimit -30000
 #define PWMFREQUENCY 20000
 
-static const char *MCTAG = "Movement_Controller (MC)";
+#define motorpwm0 19
+#define motordir0 21
+#define motorenc0 18
+#define motorpwm1 26
+#define motordir1 27
+#define motorenc1 25
+#define motorpwm2 16
+#define motordir2 17
+#define motorenc2 4
 
-// DATA TYPES
+
+#define DUTYMODE MCPWM_DUTY_MODE_1
+/*****************DATA TYPES*************/
 
 // For motor direction
-typedef struct Vector3a_t  {
-     int16_t x;
-    int16_t y;
-    int16_t z;
-}Vector3a_t;
-
-
 typedef enum direction_t
 {
-    dir_pos = 0,
-    dir_neg = 1
+    DIRPOS = 0,
+    DIRNEG = 1
 } direction_t;
-
-typedef struct motor_pos_t
-{
-    char motor;        // the PCNT unit that originated an interrupt
-    uint32_t enc_pos; // information on the event type that caused the interrupt
-} motor_pos_t;
-
 
 typedef struct xSCRP_motor_t
 {
+    int16_t num;
     // hardware pins
     uint16_t pin_pwm;
     uint16_t pin_dir;
     uint16_t pin_enc;
 
     // settable properties
-    float speed;
+    uint16_t speed;
+    float signal;
     int direction;
-    bool moving;
-
     int16_t position;
-    // readable properties
-    int region;
+    int16_t target;
+    int16_t enc_target;
+    bool enable;
 
     // mcpwm setting
     mcpwm_io_signals_t pwm_io;
@@ -82,25 +89,14 @@ typedef struct enc_evt_t
 // Our main task function
 void SCRP_MovementControl(void *args);
 
-// initiated a motor and cooresponding counter
-esp_err_t xMotorSetUp(struct xSCRP_motor_t *SCRP_motor);
-// set the direction of the motor and counter
-esp_err_t xSetMotorDir(struct xSCRP_motor_t *SCRP_motor, direction_t dir);
-// set the motor running at a defined speed
-esp_err_t xSetMotorSpeed(struct xSCRP_motor_t *SCRP_motor, float speed);
-// immediately stop a motor
-esp_err_t xStopMotor(struct xSCRP_motor_t *SCRP_motor);
-// resume the motor running at the last set speed
-esp_err_t xResumeMotor(struct xSCRP_motor_t *SCRP_motor);
-// set a encoder position target; Update the absolute position before setting the new target
-esp_err_t xSetTarget(struct xSCRP_motor_t *SCRP_motor, int16_t target);
-// reset a encoder count
-esp_err_t xOverideCurrentPosition(void *newposition);
-// get the relative position of motor wrt the last absolute position
-int16_t xGetEncoderValue(struct xSCRP_motor_t *SCRP_motor);
-//get the current absolute position (last save position + encoder value) of motor
-//Does not update absolute position
-int16_t xGetPosition(struct xSCRP_motor_t *SCRP_motor);
-//update current absolute position by adding the current encoder count; 
-//WARNING clears the current target value;
-esp_err_t xUpdatePosition(struct xSCRP_motor_t *SCRP_motor);
+// void MC_Set(void *args);
+void MC_Run(void *args);
+void MC_Stop(void *args);
+// void MC_Motors(void *args);
+
+/*************FUNCTION*************/
+esp_err_t xStopMotor(xSCRP_motor_t *SCRP_motor);
+esp_err_t xUpdateMotor(xSCRP_motor_t *SCRP_motor);
+esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor);
+esp_err_t xMotorSetup(xSCRP_motor_t *SCRP_motor);
+esp_err_t xSetMotor(xSCRP_motor_t *SCRP_motor);
