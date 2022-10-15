@@ -32,7 +32,7 @@ static const char *NET = "SCRP-NETWORK";
 #include "esp_log.h"
 #include "fcntl.h"
 
-#define HOST_IP_ADDR "192.168.1.72"
+#define HOST_IP_ADDR "192.168.1.105"
 #define PORT 9999
 #define MAX_ARG_LENGTH 16
 
@@ -49,8 +49,8 @@ static const char *NET = "SCRP-NETWORK";
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define EXAMPLE_ESP_WIFI_SSID "Ebert Farm"
-#define EXAMPLE_ESP_WIFI_PASS "6704Palfrey"
+#define EXAMPLE_ESP_WIFI_SSID "FREE_WIFI!!!"
+#define EXAMPLE_ESP_WIFI_PASS "WarzoneIsLife1"
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_PSK
 
@@ -62,3 +62,12 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 static int s_retry_num = 0;
+
+// FUNCTIONS
+void convertToInts(char args[16][16], int numArgs, int16_t intArgs[]);
+int parseCommand(char *command, int len, char args[][16]);
+int connect_to_server();
+
+static void event_handler(void *arg, esp_event_base_t event_base,
+                          int32_t event_id, void *event_data);
+void wifi_init_sta(void);
