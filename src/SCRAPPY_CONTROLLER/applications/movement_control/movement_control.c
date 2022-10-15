@@ -41,6 +41,46 @@ static xSCRP_motor_t MOTOR0 = {
     .enc_unit = PCNT_UNIT_0,
     .enc_channel = PCNT_CHANNEL_0};
 
+static xSCRP_motor_t MOTOR1 = {
+    .num = 1,
+    .pin_pwm = motorpwm1,
+    .pin_dir = motordir1,
+    .pin_enc = motorenc1,
+    .speed = 0,
+    .signal = 0,
+    .direction = 0,
+    .position = 0,
+    .target = 0,
+    .enc_target = 0,
+    .enable = false,
+    .pwm_io = MCPWM0B,
+    .pwm_unit = MCPWM_UNIT_1,
+    .pwm_timer = MCPWM_TIMER_0,
+    .pwm_gen = MCPWM_OPR_B,
+    .enc_dir = PCNT_COUNT_DEC,
+    .enc_unit = PCNT_UNIT_1,
+    .enc_channel = PCNT_CHANNEL_0};
+
+static xSCRP_motor_t MOTOR2 = {
+    .num = 2,
+    .pin_pwm = motorpwm2,
+    .pin_dir = motordir2,
+    .pin_enc = motorenc2,
+    .speed = 0,
+    .signal = 0,
+    .direction = 0,
+    .position = 0,
+    .target = 0,
+    .enc_target = 0,
+    .enable = false,
+    .pwm_io = MCPWM2B,
+    .pwm_unit = MCPWM_UNIT_0,
+    .pwm_timer = MCPWM_TIMER_2,
+    .pwm_gen = MCPWM_OPR_B,
+    .enc_dir = PCNT_COUNT_DEC,
+    .enc_unit = PCNT_UNIT_2,
+    .enc_channel = PCNT_CHANNEL_0};
+
 // Variables
 static bool pcnt_isr_installed = false;
 static bool STOP = false;
@@ -53,9 +93,20 @@ static void IRAM_ATTR encoder_isr_handler(void *arg)
        to pass it to the main program */
     // pcnt_get_event_status(pcnt_unit, &evt.status);
     // printf("Unit: %d    Event: %c", evt.unit, evt.status);
+    switch (pcnt_unit)
+    {
+    case 0:
+        MOTOR0.enable = false;
+        break;
+    case 1:
+        MOTOR1.enable = false;
+        break;
+    case 2:
+        MOTOR2.enable = false;
+        break;
+    }
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-    vTaskNotifyGiveIndexedFromISR(xh_MC_Stop, pcnt_unit, &xHigherPriorityTaskWoken);
+    vTaskNotifyGiveFromISR(xh_MC_Stop, &xHigherPriorityTaskWoken);
 }
 
 //*******************TASKS************************//
@@ -74,11 +125,13 @@ void SCRP_MovementControl(void *args)
 
     ESP_LOGI(MC, "Initiate Motor Setup");
     ESP_ERROR_CHECK(xMotorSetup(&MOTOR0));
+    ESP_ERROR_CHECK(xMotorSetup(&MOTOR1));
+    ESP_ERROR_CHECK(xMotorSetup(&MOTOR2));
     ESP_LOGI(MC, "Motor Setup Complete");
 
     ESP_LOGI(MC, "Creating Tasks");
-    xTaskCreate(MC_Run, "MC_Run", 4086, NULL, 1, &xh_MC_Run);
-    xTaskCreate(MC_Stop, "MC_Stop", 2048, NULL, 1, &xh_MC_Stop);
+    xTaskCreatePinnedToCore(MC_Run, "MC_Run", 4086, NULL, tskIDLE_PRIORITY, &xh_MC_Run, 1);
+    xTaskCreate(MC_Stop, "MC_Stop", 2048, NULL, 2, &xh_MC_Stop);
 
     ESP_LOGI(MC, "Standing by...");
 
@@ -103,10 +156,18 @@ void SCRP_MovementControl(void *args)
                 vTaskDelay(10 / portTICK_RATE_MS);
                 if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
                 {
-                    MOTOR0.enable = true;
+
                     MOTOR0.target = rxbuff[1];
+                    MOTOR1.target = rxbuff[2];
+                    MOTOR2.target = rxbuff[3];// - rxbuff[2]; // compensate for link1 rotation
+
                     MOTOR0.speed = rxbuff[4];
+                    MOTOR1.speed = rxbuff[5];
+                    MOTOR2.speed = rxbuff[6];
+
                     xSetMotor(&MOTOR0);
+                    xSetMotor(&MOTOR1);
+                    xSetMotor(&MOTOR2);
                     xTaskNotifyGive(xh_MC_Run);
                 }
                 break;
@@ -115,8 +176,7 @@ void SCRP_MovementControl(void *args)
                 xTaskNotifyGive(xh_MC_Stop);
                 break;
 
-            case 'R':
-                STOP = false;
+            case 'C':
                 break;
             default:
                 break;
@@ -138,17 +198,47 @@ void MC_Run(void *args)
     {
         // tell MC ready for task
         xTaskNotifyGive(xh_MC);
-        // if MC notifies task is available
+        // wait until MC notifies task is available
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
         {
-            ESP_LOGI(MCRUN, "Updated Target: t=%d, s = %d", MOTOR0.target, MOTOR0.speed);
+            ESP_LOGI(MCRUN, "Updated Target: P=%d, %d, %d;  S = %d, %d, %d", MOTOR0.target, MOTOR1.target, MOTOR2.target, MOTOR0.speed, MOTOR1.speed, MOTOR2.speed);
             int count = 0;
-            while (MOTOR0.enable)
+            MOTOR0.enable = true;
+            MOTOR1.enable = true;
+            MOTOR2.enable = true;
+            while (MOTOR0.enable || MOTOR1.enable || MOTOR2.enable)
             {
-                xComputeControlSignal(&MOTOR0);
-                xUpdateMotor(&MOTOR0);
+                if (MOTOR0.enable)
+                {
+                    xComputeControlSignal(&MOTOR0);
+                    xUpdateMotor(&MOTOR0);
+                }
+                else
+                {
+                    xStopMotor(&MOTOR0);
+                }
+                if (MOTOR1.enable)
+                {
+                    xComputeControlSignal(&MOTOR1);
+                    xUpdateMotor(&MOTOR1);
+                }
+                else
+                {
+                    xStopMotor(&MOTOR1);
+                }
+                if (MOTOR2.enable)
+                {
+                    xComputeControlSignal(&MOTOR2);
+                    xUpdateMotor(&MOTOR2);
+                }
+                else
+                {
+                    xStopMotor(&MOTOR2);
+                }
             }
             xStopMotor(&MOTOR0);
+            xStopMotor(&MOTOR1);
+            xStopMotor(&MOTOR2);
         }
     }
 }
@@ -163,11 +253,37 @@ void MC_Stop(void *args)
     ESP_LOGI(MCSTOP, "Initialized...");
     while (1)
     {
-        if (ulTaskNotifyTakeIndexed(0, pdTRUE, (TickType_t)10))
+        // ulTaskNotifyTakeIndexed(3, pdTRUE, portMAX_DELAY)
+        // {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
         {
-            xStopMotor(&MOTOR0);
-            ESP_LOGI(MCSTOP, "Stop Triggered");
+            if (!MOTOR0.enable)
+            {
+                xStopMotor(&MOTOR0);
+                ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR0");
+            }
+            if (!MOTOR1.enable)
+            {
+                xStopMotor(&MOTOR1);
+                ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR1");
+            }
+            if (!MOTOR2.enable)
+            {
+                xStopMotor(&MOTOR2);
+                ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR2");
+            }
         }
+        // if (ulTaskNotifyTakeIndexed(1, pdTRUE, 0))
+        // {
+        //     xStopMotor(&MOTOR1);
+        //     ESP_LOGI(MCSTOP, "Stop Triggered");
+        // }
+        // if (ulTaskNotifyTakeIndexed(2, pdTRUE, 0))
+        // {
+        //     xStopMotor(&MOTOR2);
+        //     ESP_LOGI(MCSTOP, "Stop Triggered");
+        // }
+        // }
     }
 }
 
@@ -194,7 +310,7 @@ void MC_Stop(void *args)
 // FUNCTIONS
 esp_err_t xStopMotor(xSCRP_motor_t *SCRP_motor)
 {
-    SCRP_motor->enable = false;
+    // SCRP_motor->enable = false;
     pcnt_counter_pause(SCRP_motor->enc_unit);
     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, 0));
     return ESP_OK;
@@ -242,22 +358,22 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     // 0.01 * SCRP_motor->speed
     if (abs(encoder) < abs(SCRP_motor->enc_target / 2))
     {
-        SCRP_motor->signal = 300 * (abs(encoder));
+        SCRP_motor->signal = 200 * (abs(encoder));
     }
     else
     {
-        SCRP_motor->signal = 300 * (abs(error));
+        SCRP_motor->signal = 200 * (abs(error));
     }
     SCRP_motor->signal /= abs(SCRP_motor->enc_target);
-    //printf("error = %d", error);
-    //printf("signal = %f \n", SCRP_motor->signal);
-    if (SCRP_motor->signal > 95)
+    // printf("error = %d", error);
+    // printf("signal = %f \n", SCRP_motor->signal);
+    if (SCRP_motor->signal > 70)
     {
-        SCRP_motor->signal = 95;
+        SCRP_motor->signal = 70;
     }
-    if (SCRP_motor->signal < 20)
+    if (SCRP_motor->signal < 30)
     {
-        SCRP_motor->signal = 20;
+        SCRP_motor->signal = 30;
     }
     ESP_LOGI(MCMOTORS, "MOTOR%d Signal =%f", SCRP_motor->num, SCRP_motor->signal);
     return ESP_OK;

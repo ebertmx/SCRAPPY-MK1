@@ -40,7 +40,7 @@ static const char *MCMOTORS = "MC-MOTOR";
 #define motorenc2 4
 
 
-#define DUTYMODE MCPWM_DUTY_MODE_1
+#define DUTYMODE MCPWM_DUTY_MODE_0
 /*****************DATA TYPES*************/
 
 // For motor direction
