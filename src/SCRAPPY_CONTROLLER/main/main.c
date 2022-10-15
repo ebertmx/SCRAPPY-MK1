@@ -11,6 +11,7 @@ extern QueueHandle_t xMC_queue;
 
 void app_main(void)
 {
+    esp_log_level_set("*", ESP_LOG_NONE);
     esp_log_level_set("MC-MOTOR", ESP_LOG_NONE);
     ESP_LOGI(SCRP, "SCRAPPY Starting...");
 
@@ -18,27 +19,27 @@ void app_main(void)
     ESP_LOGI(SCRP, "Initiating Startup: SCRAPPY");
 
     // SET UP NETWORK
-    // ESP_LOGI(WIFI, "Starting Wifi...");
-    // esp_err_t ret = nvs_flash_init();
-    // if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    // {
-    //     ESP_ERROR_CHECK(nvs_flash_erase());
-    //     ret = nvs_flash_init();
-    // }
-    // ESP_ERROR_CHECK(ret);
-    // wifi_init_sta();
-    // ESP_LOGI(WIFI, "Wifi Started");
+    ESP_LOGI(WIFI, "Starting Wifi...");
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+    wifi_init_sta();
+    ESP_LOGI(WIFI, "Wifi Started");
 
-    // ESP_LOGI(NET, "Connecting to Network...");
-    // int sock = connect_to_server();
-    // if (sock < 0)
-    // {
-    //     ESP_LOGE(NET, "Connection to server failed");
-    // }
-    // else
-    // {
-    //     ESP_LOGI(NET, "Connection successful");
-    // }
+    ESP_LOGI(NET, "Connecting to Network...");
+    int sock = connect_to_server();
+    if (sock < 0)
+    {
+        ESP_LOGE(NET, "Connection to server failed");
+    }
+    else
+    {
+        ESP_LOGI(NET, "Connection successful");
+    }
 
     ESP_LOGI(SCRP, "Creating Tasks...");
     xTaskCreate(SCRP_MovementControl, "MC", 4086, NULL, 1, &xh_MC);
@@ -55,48 +56,48 @@ void app_main(void)
     int numArgs = 0;
     int i = 0;
 
-    // while (1)
-    // {
-    //     int len = recv(sock, command, sizeof(command) - 1, 0);
-    //     if (len > 0)
-    //     {
-    //         command[len] = 0; // Null-terminate whatever we received and treat like a string
-    //         ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
-    //         ESP_LOGI(SCRP, "%s", command);
-    //         numArgs = parseCommand(command, len, args);
-    //         if (strcmp(command, "move") == 0)
-    //         {
-    //             intArgs[0] = 'P';
-    //             convertToInts(args, numArgs, intArgs);
-    //             xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
-    //         }
-    //     }
-    //     vTaskDelay(10 / portTICK_RATE_MS);
-    // }
-
-    while (i < 5)
-    {
-        ESP_LOGI(SCRP, "SENDING...");
-        xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
-        myposition2[1] += 100;
-        myposition2[2] += 100;
-        myposition2[3] += 100;
-        vTaskDelay(100 / portTICK_RATE_MS);
-        ESP_LOGI(SCRP, "SENDING...");
-        xQueueSendToBack(xMC_queue, (void *)&(myposition1), portMAX_DELAY);
-        myposition2[1] += -100;
-        myposition2[2] += -100;
-        myposition2[3] += -100;
-
-        vTaskDelay(10 / portTICK_RATE_MS);
-        i++;
-    }
-
     while (1)
     {
-        vTaskDelay(3000 / portTICK_RATE_MS);
-        ESP_LOGI(SCRP, "Standing by...");
+        int len = recv(sock, command, sizeof(command) - 1, 0);
+        if (len > 0)
+        {
+            command[len] = 0; // Null-terminate whatever we received and treat like a string
+            ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
+            ESP_LOGI(SCRP, "%s", command);
+            numArgs = parseCommand(command, len, args);
+            if (strcmp(command, "move") == 0)
+            {
+                intArgs[0] = 'P';
+                convertToInts(args, numArgs, intArgs);
+                xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
+            }
+        }
+        vTaskDelay(10 / portTICK_RATE_MS);
     }
+
+    // while (i < 5)
+    // {
+    //     ESP_LOGI(SCRP, "SENDING...");
+    //     xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
+    //     myposition2[1] += 100;
+    //     myposition2[2] += 100;
+    //     myposition2[3] += 100;
+    //     vTaskDelay(100 / portTICK_RATE_MS);
+    //     ESP_LOGI(SCRP, "SENDING...");
+    //     xQueueSendToBack(xMC_queue, (void *)&(myposition1), portMAX_DELAY);
+    //     myposition2[1] += -100;
+    //     myposition2[2] += -100;
+    //     myposition2[3] += -100;
+
+    //     vTaskDelay(10 / portTICK_RATE_MS);
+    //     i++;
+    // }
+
+    // while (1)
+    // {
+    //     vTaskDelay(3000 / portTICK_RATE_MS);
+    //     ESP_LOGI(SCRP, "Standing by...");
+    // }
 }
 
 /**************************WIFIANDNETWORK**************************/

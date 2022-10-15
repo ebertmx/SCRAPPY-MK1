@@ -159,7 +159,7 @@ void SCRP_MovementControl(void *args)
 
                     MOTOR0.target = rxbuff[1];
                     MOTOR1.target = rxbuff[2];
-                    MOTOR2.target = rxbuff[3] - rxbuff[2]; // compensate for link1 rotation
+                    MOTOR2.target = rxbuff[3];// - rxbuff[2]; // compensate for link1 rotation
 
                     MOTOR0.speed = rxbuff[4];
                     MOTOR1.speed = rxbuff[5];
@@ -367,13 +367,13 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     SCRP_motor->signal /= abs(SCRP_motor->enc_target);
     // printf("error = %d", error);
     // printf("signal = %f \n", SCRP_motor->signal);
-    if (SCRP_motor->signal > 95)
+    if (SCRP_motor->signal > 70)
     {
-        SCRP_motor->signal = 95;
+        SCRP_motor->signal = 70;
     }
-    if (SCRP_motor->signal < 20)
+    if (SCRP_motor->signal < 30)
     {
-        SCRP_motor->signal = 20;
+        SCRP_motor->signal = 30;
     }
     ESP_LOGI(MCMOTORS, "MOTOR%d Signal =%f", SCRP_motor->num, SCRP_motor->signal);
     return ESP_OK;

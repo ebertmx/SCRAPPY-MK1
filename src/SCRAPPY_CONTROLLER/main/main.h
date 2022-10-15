@@ -32,7 +32,7 @@ static const char *NET = "SCRP-NETWORK";
 #include "esp_log.h"
 #include "fcntl.h"
 
-#define HOST_IP_ADDR "192.168.1.105"
+#define HOST_IP_ADDR "192.168.1.140"
 #define PORT 9999
 #define MAX_ARG_LENGTH 16
 
