@@ -159,7 +159,7 @@ void SCRP_MovementControl(void *args)
 
                     MOTOR0.target = rxbuff[1];
                     MOTOR1.target = rxbuff[2];
-                    MOTOR2.target = rxbuff[3];// - rxbuff[2]; // compensate for link1 rotation
+                    MOTOR2.target = rxbuff[3]; // - rxbuff[2]; // compensate for link1 rotation
 
                     MOTOR0.speed = rxbuff[4];
                     MOTOR1.speed = rxbuff[5];
@@ -239,6 +239,7 @@ void MC_Run(void *args)
             xStopMotor(&MOTOR0);
             xStopMotor(&MOTOR1);
             xStopMotor(&MOTOR2);
+            ESP_LOGI(MCRUN, "Reached Target");
         }
     }
 }
@@ -259,16 +260,25 @@ void MC_Stop(void *args)
         {
             if (!MOTOR0.enable)
             {
+                int16_t encoder;
+                pcnt_get_counter_value(MOTOR0.enc_unit, &encoder);
+                ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
                 xStopMotor(&MOTOR0);
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR0");
             }
             if (!MOTOR1.enable)
             {
+                int16_t encoder;
+                pcnt_get_counter_value(MOTOR1.enc_unit, &encoder);
+                ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
                 xStopMotor(&MOTOR1);
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR1");
             }
             if (!MOTOR2.enable)
             {
+                int16_t encoder;
+                pcnt_get_counter_value(MOTOR1.enc_unit, &encoder);
+                ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
                 xStopMotor(&MOTOR2);
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR2");
             }
@@ -376,6 +386,7 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
         SCRP_motor->signal = 30;
     }
     ESP_LOGI(MCMOTORS, "MOTOR%d Signal =%f", SCRP_motor->num, SCRP_motor->signal);
+    SCRP_motor->signal = 50; /// CHANGE LATER
     return ESP_OK;
 }
 
@@ -397,8 +408,8 @@ esp_err_t xSetMotor(xSCRP_motor_t *SCRP_motor)
     // set interrupt trigger
     pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, SCRP_motor->enc_target);
     pcnt_counter_clear(SCRP_motor->enc_unit); // clear counter to enable trigger
-
-    ESP_LOGI(MC, "MOTOR%d set; target = %d", SCRP_motor->num, SCRP_motor->enc_target);
+    pcnt_get_counter_value(SCRP_motor->enc_unit, &encoder_count);
+    ESP_LOGI(MC, "MOTOR%d set; target = %d, encodervalue = %d", SCRP_motor->num, SCRP_motor->enc_target, encoder_count);
     return ESP_OK;
 }
 
@@ -447,7 +458,7 @@ esp_err_t xMotorSetup(xSCRP_motor_t *SCRP_motor)
     pcnt_unit_config(&pcnt_config);
 
     /* Configure and enable the input filter */
-    pcnt_set_filter_value(SCRP_motor->enc_unit, 100);
+    pcnt_set_filter_value(SCRP_motor->enc_unit, 1000);
     pcnt_filter_enable(SCRP_motor->enc_unit);
 
     pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, 100);

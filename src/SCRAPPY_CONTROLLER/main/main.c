@@ -11,7 +11,8 @@ extern QueueHandle_t xMC_queue;
 
 void app_main(void)
 {
-    esp_log_level_set("*", ESP_LOG_NONE);
+    //
+    //esp_log_level_set("*", ESP_LOG_NONE);
     esp_log_level_set("MC-MOTOR", ESP_LOG_NONE);
     ESP_LOGI(SCRP, "SCRAPPY Starting...");
 
@@ -48,8 +49,8 @@ void app_main(void)
 
     ESP_LOGI(SCRP, "Standing by...");
 
-    int16_t myposition1[] = {'P', -100, -100, -100, 75, 30, 75};
-    int16_t myposition2[] = {'P', 100, 100, -100, 50, 30, 60};
+    //int16_t myposition1[] = {'P', -100, -100, -100, 75, 30, 75};
+    //int16_t myposition2[] = {'P', 100, 100, 100, 50, 30, 60};
     char command[128];
     char args[16][16];
     int16_t intArgs[7];
@@ -79,17 +80,17 @@ void app_main(void)
     // {
     //     ESP_LOGI(SCRP, "SENDING...");
     //     xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
-    //     myposition2[1] += 100;
-    //     myposition2[2] += 100;
-    //     myposition2[3] += 100;
-    //     vTaskDelay(100 / portTICK_RATE_MS);
+    //     // myposition2[1] += 100;
+    //     // myposition2[2] += 100;
+    //     // myposition2[3] += 100;
+    //     vTaskDelay(1000 / portTICK_RATE_MS);
     //     ESP_LOGI(SCRP, "SENDING...");
     //     xQueueSendToBack(xMC_queue, (void *)&(myposition1), portMAX_DELAY);
-    //     myposition2[1] += -100;
-    //     myposition2[2] += -100;
-    //     myposition2[3] += -100;
+    //     // myposition2[1] += -100;
+    //     // myposition2[2] += -100;
+    //     // myposition2[3] += -100;
 
-    //     vTaskDelay(10 / portTICK_RATE_MS);
+    //     vTaskDelay(1000 / portTICK_RATE_MS);
     //     i++;
     // }
 
