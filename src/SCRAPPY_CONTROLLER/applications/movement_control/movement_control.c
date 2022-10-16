@@ -27,6 +27,7 @@ static xSCRP_motor_t MOTOR0 = {
     .pin_dir = motordir0,
     .pin_enc = motorenc0,
     .speed = 0,
+    .minspeed = 20,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -47,6 +48,7 @@ static xSCRP_motor_t MOTOR1 = {
     .pin_dir = motordir1,
     .pin_enc = motorenc1,
     .speed = 0,
+     .minspeed = 40,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -67,6 +69,7 @@ static xSCRP_motor_t MOTOR2 = {
     .pin_dir = motordir2,
     .pin_enc = motorenc2,
     .speed = 0,
+     .minspeed = 20,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -156,15 +159,12 @@ void SCRP_MovementControl(void *args)
                 vTaskDelay(10 / portTICK_RATE_MS);
                 if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
                 {
-
                     MOTOR0.target = rxbuff[1];
                     MOTOR1.target = rxbuff[2];
-                    MOTOR2.target = rxbuff[3]; // - rxbuff[2]; // compensate for link1 rotation
-
+                    MOTOR2.target = rxbuff[3] - rxbuff[2]; // compensate for link1 rotation
                     MOTOR0.speed = rxbuff[4];
                     MOTOR1.speed = rxbuff[5];
                     MOTOR2.speed = rxbuff[6];
-
                     xSetMotor(&MOTOR0);
                     xSetMotor(&MOTOR1);
                     xSetMotor(&MOTOR2);
@@ -260,25 +260,25 @@ void MC_Stop(void *args)
         {
             if (!MOTOR0.enable)
             {
-                int16_t encoder;
-                pcnt_get_counter_value(MOTOR0.enc_unit, &encoder);
-                ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
+                // int16_t encoder;
+                // pcnt_get_counter_value(MOTOR0.enc_unit, &encoder);
+                // ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
                 xStopMotor(&MOTOR0);
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR0");
             }
             if (!MOTOR1.enable)
             {
-                int16_t encoder;
-                pcnt_get_counter_value(MOTOR1.enc_unit, &encoder);
-                ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
+                // int16_t encoder;
+                // pcnt_get_counter_value(MOTOR1.enc_unit, &encoder);
+                // ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
                 xStopMotor(&MOTOR1);
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR1");
             }
             if (!MOTOR2.enable)
             {
-                int16_t encoder;
-                pcnt_get_counter_value(MOTOR1.enc_unit, &encoder);
-                ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
+                // int16_t encoder;
+                // pcnt_get_counter_value(MOTOR1.enc_unit, &encoder);
+                // ESP_LOGI(MCSTOP, "Encoder Value %d", encoder);
                 xStopMotor(&MOTOR2);
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR2");
             }
@@ -368,25 +368,26 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     // 0.01 * SCRP_motor->speed
     if (abs(encoder) < abs(SCRP_motor->enc_target / 2))
     {
-        SCRP_motor->signal = 200 * (abs(encoder));
+        SCRP_motor->signal = 0.5 * (abs(encoder));
     }
     else
     {
-        SCRP_motor->signal = 200 * (abs(error));
+        SCRP_motor->signal = 0.5 * (abs(error));
     }
-    SCRP_motor->signal /= abs(SCRP_motor->enc_target);
-    // printf("error = %d", error);
-    // printf("signal = %f \n", SCRP_motor->signal);
-    if (SCRP_motor->signal > 70)
+    // SCRP_motor->signal /= abs(SCRP_motor->enc_target);
+    //  printf("error = %d", error);
+    //  printf("signal = %f \n", SCRP_motor->signal);
+    if (SCRP_motor->signal > SCRP_motor->speed)
     {
-        SCRP_motor->signal = 70;
+        SCRP_motor->signal = SCRP_motor->speed;
     }
-    if (SCRP_motor->signal < 30)
+    if (SCRP_motor->signal < SCRP_motor->minspeed)
     {
-        SCRP_motor->signal = 30;
+        SCRP_motor->signal = SCRP_motor->minspeed;
     }
+    // SCRP_motor->signal = SCRP_motor->speed; /// CHANGE LATER
     ESP_LOGI(MCMOTORS, "MOTOR%d Signal =%f", SCRP_motor->num, SCRP_motor->signal);
-    SCRP_motor->signal = 50; /// CHANGE LATER
+
     return ESP_OK;
 }
 

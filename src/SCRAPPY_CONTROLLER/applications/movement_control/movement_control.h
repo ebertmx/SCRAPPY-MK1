@@ -60,6 +60,7 @@ typedef struct xSCRP_motor_t
 
     // settable properties
     uint16_t speed;
+    uint16_t minspeed;
     float signal;
     int direction;
     int16_t position;
