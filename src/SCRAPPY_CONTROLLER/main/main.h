@@ -64,8 +64,9 @@ static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
 // FUNCTIONS
+int16_t charToInt16(char c);
 void convertToInts(char args[16][16], int numArgs, int16_t intArgs[]);
-int parseCommand(char *command, int len, char args[][16]);
+int parseCommand(char *command, int len, int16_t args[7]);
 int connect_to_server();
 
 static void event_handler(void *arg, esp_event_base_t event_base,

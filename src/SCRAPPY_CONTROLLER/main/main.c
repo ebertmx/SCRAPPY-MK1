@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "main.h"
-#include "inttypes.h"
-#include "stdint.h"
+#include "math.h"
+
 // GLOBALS
 extern TaskHandle_t xh_MC;
 extern QueueHandle_t xMC_queue;
 
-void printarr(int16_t *arr[7]);
 void app_main(void)
 {
     //
@@ -51,110 +50,101 @@ void app_main(void)
 
     ESP_LOGI(SCRP, "Standing by...");
 
-    // int16_t myposition1[] = {'P', -100, -100, -100, 75, 30, 75};
-    // int16_t myposition2[] = {'P', 100, 100, 100, 50, 30, 60};
-    char command[128];
-    char args[16][16];
-    int16_t intArgs[7];
-    int numArgs = 0;
-    int i = 0;
-
+    static char command[128];
     while (1)
     {
         int len = recv(sock, command, sizeof(command) - 1, 0);
         if (len > 0)
         {
+            int16_t intArgs[] = {'x', 0, 0, 0, 0, 0, 0};
             command[len] = 0; // Null-terminate whatever we received and treat like a string
             ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
             ESP_LOGI(SCRP, "%s", command);
-            numArgs = parseCommand(command, len, args);
-
-            if (strcmp(command, "P") == 0)
-            {
-               intArgs[0] = 'P';
-                convertToInts(args, numArgs, intArgs);
-               // printarr(&intArgs);
-                xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
-            }
-            else if (strcmp(command, "C") == 0)
-            {
-                intArgs[0] = 'C';
-                convertToInts(args, numArgs, intArgs);
-                //printarr(&intArgs);
-                xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
-            }
+            ESP_ERROR_CHECK(parseCommand(command, len, intArgs));
+            xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
+            memset(command, 0, 128);
         }
         vTaskDelay(10 / portTICK_RATE_MS);
     }
-
-    // while (i < 5)
-    // {
-    //     ESP_LOGI(SCRP, "SENDING...");
-    //     xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
-    //     // myposition2[1] += 100;
-    //     // myposition2[2] += 100;
-    //     // myposition2[3] += 100;
-    //     vTaskDelay(1000 / portTICK_RATE_MS);
-    //     ESP_LOGI(SCRP, "SENDING...");
-    //     xQueueSendToBack(xMC_queue, (void *)&(myposition1), portMAX_DELAY);
-    //     // myposition2[1] += -100;
-    //     // myposition2[2] += -100;
-    //     // myposition2[3] += -100;
-
-    //     vTaskDelay(1000 / portTICK_RATE_MS);
-    //     i++;
-    // }
-
-    // while (1)
-    // {
-    //     vTaskDelay(3000 / portTICK_RATE_MS);
-    //     ESP_LOGI(SCRP, "Standing by...");
-    // }
 }
 
 /**************************WIFIANDNETWORK**************************/
 
-
-void convertToInts(char args[16][16], int numArgs, int16_t intArgs[])
+int16_t charToInt16(char c)
 {
-    char *ptr;
-    for (int i = 1; i <= numArgs; i++)
+
+    switch (c)
     {
-        intArgs[i] = (int16_t)(strtol(args[i-1], &ptr, 10));
-        int16_t temp = intArgs[i];
-        printf("args = %d\n", temp);
+    case '9':
+        return 9;
+    case '8':
+        return 8;
+    case '7':
+        return 7;
+    case '6':
+        return 6;
+    case '5':
+        return 5;
+    case '4':
+        return 4;
+    case '3':
+        return 3;
+    case '2':
+        return 2;
+    case '1':
+        return 1;
+    case '0':
+        return 0;
     }
+    return 0;
 }
 
-int parseCommand(char *command, int len, char args[][16])
+esp_err_t parseCommand(char *command, int len, int16_t args[])
 {
-    int parseArgs = 0;
-    int curArg = 0;
+    int parseArgs = 1;
+    int curArg = 6;
     int argIndex = 0;
     char c;
-    for (int i = 0; i < len; i++)
+    int16_t tempnum = 0;
+
+    ESP_LOGI(SCRP, "Parsing Command string of length: %d", len);
+    args[curArg] = 0;
+
+    for (int i = len - 1; i >= 0; i--)
     {
-        
         c = command[i];
-        printf("c = %d\n", c);
-        if (c == ':')
-        {
-            command[i] = '\0';
-            parseArgs = 1;
-            continue;
-        }
+        // printf("c= %c\n", c);
         if (parseArgs)
         {
-            if (c == ',')
+            if (c == ',' || c == ':')
             {
-                curArg++;
+                ESP_LOGI(SCRP, "Parsed Coordinate for Arg = %d, value = %d", curArg, args[curArg]);
+                curArg--;
+                args[curArg] = 0;
                 argIndex = 0;
+
+                if (c == ':')
+                {
+                    parseArgs = 0;
+                    c = command[i - 1];
+                    args[0] = (char) c;
+                    ESP_LOGI(SCRP, "Parsed Coordinate for Arg = %d, value = %d", curArg, args[curArg]);
+                    return ESP_OK;
+                }
                 continue;
             }
-            args[curArg][argIndex++] = c;
+            if(c =='-'){
+                args[curArg]*= -1;
+                continue;
+            }
+
+            tempnum = charToInt16(c);
+            args[curArg] += tempnum * pow(10, argIndex);
+            //printf("args[][%d] = %d \n", argIndex, args[curArg]);
+            argIndex++;
         }
     }
-    return curArg + parseArgs;
+    return ESP_OK;
 }
 
 int connect_to_server()

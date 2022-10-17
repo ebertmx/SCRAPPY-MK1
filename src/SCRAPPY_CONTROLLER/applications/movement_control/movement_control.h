@@ -41,6 +41,8 @@ static const char *MCMOTORS = "MC-MOTOR";
 
 
 #define DUTYMODE MCPWM_DUTY_MODE_0
+
+#define MOTOR2_CORR_FACTOR 2
 /*****************DATA TYPES*************/
 
 // For motor direction
@@ -97,6 +99,7 @@ void MC_Stop(void *args);
 // void MC_Motors(void *args);
 
 /*************FUNCTION*************/
+esp_err_t xClearCounter(xSCRP_motor_t *SCRP_motor);
 esp_err_t xStopMotor(xSCRP_motor_t *SCRP_motor);
 esp_err_t xUpdateMotor(xSCRP_motor_t *SCRP_motor);
 esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor);

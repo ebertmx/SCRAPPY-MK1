@@ -50,7 +50,7 @@ static xSCRP_motor_t MOTOR1 = {
     .pin_enc = motorenc1,
     .speed = 0,
     .minspeed = 40,
-    .Kp = 0.6,
+    .Kp = 0.4,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -165,10 +165,11 @@ void SCRP_MovementControl(void *args)
 
                     MOTOR0.target = rxbuff[1];
                     MOTOR1.target = rxbuff[2];
-                    MOTOR2.target = rxbuff[3] - rxbuff[2]; // compensate for link1 rotation
+                    MOTOR2.target = rxbuff[3] - (rxbuff[2]) / MOTOR2_CORR_FACTOR; // compensate for link1 rotation
                     MOTOR0.speed = rxbuff[4];
                     MOTOR1.speed = rxbuff[5];
                     MOTOR2.speed = rxbuff[6];
+
                     xSetMotor(&MOTOR0);
                     xSetMotor(&MOTOR1);
                     xSetMotor(&MOTOR2);
@@ -182,17 +183,26 @@ void SCRP_MovementControl(void *args)
                 break;
 
             case 'C':
-                ESP_LOGI(MC, "Calibrated");
+
                 MOTOR0.position = rxbuff[1];
                 MOTOR1.position = rxbuff[2];
-                MOTOR2.position = rxbuff[3] - rxbuff[2]; // compensate for link1 rotation
+                MOTOR2.position = rxbuff[3] - (rxbuff[2]) / MOTOR2_CORR_FACTOR; // compensate for link1 rotation
                 MOTOR0.speed = rxbuff[4];
                 MOTOR1.speed = rxbuff[5];
                 MOTOR2.speed = rxbuff[6];
+                xClearCounter(&MOTOR0);
+                xClearCounter(&MOTOR1);
+                xClearCounter(&MOTOR2);
+                xSetMotor(&MOTOR0);
+                xSetMotor(&MOTOR1);
+                xSetMotor(&MOTOR2);
+                ESP_LOGI(MC, "Calibrated to P = %d,%d,%d", MOTOR0.position, MOTOR1.position, MOTOR2.position);
+
                 break;
             default:
                 break;
             }
+            memset(rxbuff, 0, 7 * sizeof(int16_t));
         }
     }
 }
@@ -346,10 +356,21 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     if (error < 0)
     {
         SCRP_motor->direction = DIRNEG;
+
+        if (SCRP_motor->num == 1)
+        {
+            SCRP_motor->Kp = 0.3;
+            SCRP_motor->minspeed = 10;
+        }
     }
     else
     {
         SCRP_motor->direction = DIRPOS;
+        if (SCRP_motor->num == 1)
+        {
+            SCRP_motor->Kp = 0.6;
+            SCRP_motor->minspeed = 40;
+        }
     }
     // 0.01 * SCRP_motor->speed
     if (abs(encoder) < abs(SCRP_motor->enc_target / 2))
@@ -397,6 +418,16 @@ esp_err_t xSetMotor(xSCRP_motor_t *SCRP_motor)
     pcnt_counter_clear(SCRP_motor->enc_unit); // clear counter to enable trigger
     pcnt_get_counter_value(SCRP_motor->enc_unit, &encoder_count);
     ESP_LOGI(MC, "MOTOR%d set; target = %d, encodervalue = %d", SCRP_motor->num, SCRP_motor->enc_target, encoder_count);
+    return ESP_OK;
+}
+
+esp_err_t xClearCounter(xSCRP_motor_t *SCRP_motor)
+{
+    int16_t encoder_count = 0;
+    pcnt_counter_pause(SCRP_motor->enc_unit); // make sure encoder is paused
+    pcnt_counter_clear(SCRP_motor->enc_unit); // clear counter to enable trigger
+    pcnt_get_counter_value(SCRP_motor->enc_unit, &encoder_count);
+    ESP_LOGI(MC, "MOTOR%d counter cleared = %d", SCRP_motor->num, encoder_count);
     return ESP_OK;
 }
 
