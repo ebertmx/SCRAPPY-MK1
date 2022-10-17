@@ -89,7 +89,7 @@ control_column = [
      sg.Button("-", size=(15, 3), key='2-backward')],
     [sg.Button("Submit", key="motor-submit"), sg.Button("Calibrate", key="calibrate"), sg.Button("Test", key="test")],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
-    [sg.Text(size=(43, 15), key='cmd-output', background_color='black', text_color='green')],
+    [sg.Output(size=(43, 15), key='cmd-output', background_color='black', text_color='green')],
     [sg.InputText(key='cmd-input', size=(49, 3), do_not_clear=False)]
 ]
 data_column = [
