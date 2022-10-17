@@ -47,7 +47,7 @@ class ArmServer:
             while self.connected:
                 try:
                     data = self.client.recv(1024).decode()
-                    self.print_to_element(data, "cmd-display")
+                    self.print_to_element(data, "scrappy-display")
                 except Exception as e:
                     print(e)
                     self.connected = False
@@ -58,11 +58,10 @@ class ArmServer:
         self.window[element_id].print(data)
 
     def send_command(self, command):
-        self.print_to_element(command, 'cmd-output')
+        self.print_to_element(command, 'scrappy-output')
         if not self.connected:
-            self.print_to_element("No connection", 'cmd-output')
+            self.print_to_element("No connection", 'scrappy-display')
             return
-        #self.print_to_element(command, 'cmd-output')
         self.client.sendall(command.encode())
 
     def print_network_status(self):
