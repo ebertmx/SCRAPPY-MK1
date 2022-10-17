@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from scrappy_server import *
+from serial_reader import *
 
 WIN_CLOSED = sg.WIN_CLOSED
 
@@ -105,7 +106,9 @@ def send_move_command(v, s):
 
 
 def handle_event(ev, v, s, w):
-    if ev == "cmd-input_Enter":
+    if ev == "serial":
+        s.send_command(v['serial'])
+    elif ev == "cmd-input_Enter":
         s.send_command(v['cmd-input'])
     elif ev == 'connect':
         s.start()
@@ -140,13 +143,13 @@ def handle_event(ev, v, s, w):
 
 
 if __name__ == '__main__':
-    window = sg.Window("SCRAPP1-MK1", layout, finalize=True, )
-    with ArmServer(ADDRESS, window) as server:
+    window = sg.Window("SCRAPP1-MK1", layout, finalize=True, resizable=True)
+    with ArmServer(ADDRESS, window) as server, SerialReader("COM4", window) as reader:
         setup_window(window, server)
         server.start()
+        reader.start()
         while True:
             event, values = window.read()
-            print(event, values)
             if event == WIN_CLOSED:
                 break
             handle_event(event, values, server, window)
