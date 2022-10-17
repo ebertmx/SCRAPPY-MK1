@@ -4,8 +4,8 @@ from serial import *
 
 class SerialReader:
 
-    def __init__(self, port, window=None):
-        self.port = port
+    def __init__(self, window=None):
+        self.port = None
         self.started = False
         self.serial = None
         self.read_thread = None
@@ -17,9 +17,10 @@ class SerialReader:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.serial.close()
 
-    def start(self):
+    def start(self, port):
         if not self.started:
-            self.serial = Serial(self.port, 115200)
+            self.serial = Serial(port, 115200)
+            self.port = port
             self.serial.flush()
             self.read_thread = threading.Thread(target=self._start, daemon=True)
             self.read_thread.start()
