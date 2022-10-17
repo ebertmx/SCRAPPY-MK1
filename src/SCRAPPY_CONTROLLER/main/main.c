@@ -61,7 +61,7 @@ void app_main(void)
             ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
             ESP_LOGI(SCRP, "%s", command);
             ESP_ERROR_CHECK(parseCommand(command, len, intArgs));
-            xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
+                xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
             memset(command, 0, 128);
         }
         vTaskDelay(10 / portTICK_RATE_MS);
