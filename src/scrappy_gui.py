@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from scrappy_server import *
 from serial_reader import *
 import traceback
-
+import serial.tools.list_ports
 WIN_CLOSED = sg.WIN_CLOSED
 
 STEP = 10
@@ -89,7 +89,7 @@ control_column = [
      sg.Button("-", size=(15, 3), key='2-backward')],
     [sg.Button("Submit", key="motor-submit"), sg.Button("Calibrate", key="calibrate"), sg.Button("Test", key="test")],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
-    [sg.Text(size=(43, 15), key='cmd-output', background_color='black', text_color='green')],
+    [sg.Output(size=(43, 15), key='cmd-output', background_color='black', text_color='green')],
     [sg.InputText(key='cmd-input', size=(49, 3), do_not_clear=False)]
 ]
 data_column = [
@@ -157,7 +157,7 @@ def handle_event(event, values, window):
             return
         send_move_command("P", values, server)
     elif event == "test":
-        command = "P:0,0,0,30,30,30"
+        command = "P:100,100,100,30,30,30"
         server.send_command(command)
     elif "-forward" in event or "-backward" in event:
         zero_pos = int(values['0-position'])

@@ -4,15 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "main.h"
-
+#include "inttypes.h"
+#include "stdint.h"
 // GLOBALS
 extern TaskHandle_t xh_MC;
 extern QueueHandle_t xMC_queue;
 
+void printarr(int16_t *arr[7]);
 void app_main(void)
 {
     //
-    //esp_log_level_set("*", ESP_LOG_NONE);
+    // esp_log_level_set("*", ESP_LOG_NONE);
     esp_log_level_set("MC-MOTOR", ESP_LOG_NONE);
     ESP_LOGI(SCRP, "SCRAPPY Starting...");
 
@@ -49,8 +51,8 @@ void app_main(void)
 
     ESP_LOGI(SCRP, "Standing by...");
 
-    //int16_t myposition1[] = {'P', -100, -100, -100, 75, 30, 75};
-    //int16_t myposition2[] = {'P', 100, 100, 100, 50, 30, 60};
+    // int16_t myposition1[] = {'P', -100, -100, -100, 75, 30, 75};
+    // int16_t myposition2[] = {'P', 100, 100, 100, 50, 30, 60};
     char command[128];
     char args[16][16];
     int16_t intArgs[7];
@@ -66,14 +68,19 @@ void app_main(void)
             ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
             ESP_LOGI(SCRP, "%s", command);
             numArgs = parseCommand(command, len, args);
+
             if (strcmp(command, "P") == 0)
             {
-                intArgs[0] = 'P';
+               intArgs[0] = 'P';
                 convertToInts(args, numArgs, intArgs);
+               // printarr(&intArgs);
                 xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
-            } else if(strcmp(command, "C") == 0){
+            }
+            else if (strcmp(command, "C") == 0)
+            {
                 intArgs[0] = 'C';
                 convertToInts(args, numArgs, intArgs);
+                //printarr(&intArgs);
                 xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
             }
         }
@@ -114,6 +121,8 @@ void convertToInts(char args[16][16], int numArgs, int16_t intArgs[])
     for (int i = 1; i <= numArgs; i++)
     {
         intArgs[i] = (int16_t)(strtol(args[i-1], &ptr, 10));
+        int16_t temp = intArgs[i];
+        printf("args = %d\n", temp);
     }
 }
 
@@ -125,7 +134,9 @@ int parseCommand(char *command, int len, char args[][16])
     char c;
     for (int i = 0; i < len; i++)
     {
+        
         c = command[i];
+        printf("c = %d\n", c);
         if (c == ':')
         {
             command[i] = '\0';

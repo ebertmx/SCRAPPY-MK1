@@ -73,7 +73,7 @@ static xSCRP_motor_t MOTOR2 = {
     .speed = 0,
     .minspeed = 20,
     .Kp = 0.9,
-        .signal = 0,
+    .signal = 0,
     .direction = 0,
     .position = 0,
     .target = 0,
@@ -148,7 +148,7 @@ void SCRP_MovementControl(void *args)
         {
             char code = rxbuff[0];
 
-            ESP_LOGI(MC, "Data Recieved: %c, %d, %d, %d, %d, %d, %d ", code,
+            ESP_LOGI(MC, "Data Recieved: %d, %d, %d, %d, %d, %d, %d ", code,
                      rxbuff[1],
                      rxbuff[2],
                      rxbuff[3],
@@ -162,6 +162,7 @@ void SCRP_MovementControl(void *args)
                 vTaskDelay(10 / portTICK_RATE_MS);
                 if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
                 {
+
                     MOTOR0.target = rxbuff[1];
                     MOTOR1.target = rxbuff[2];
                     MOTOR2.target = rxbuff[3] - rxbuff[2]; // compensate for link1 rotation
@@ -171,6 +172,7 @@ void SCRP_MovementControl(void *args)
                     xSetMotor(&MOTOR0);
                     xSetMotor(&MOTOR1);
                     xSetMotor(&MOTOR2);
+                    ESP_LOGI(MC, "Motors Set");
                     xTaskNotifyGive(xh_MC_Run);
                 }
                 break;
@@ -180,6 +182,13 @@ void SCRP_MovementControl(void *args)
                 break;
 
             case 'C':
+                ESP_LOGI(MC, "Calibrated");
+                MOTOR0.position = rxbuff[1];
+                MOTOR1.position = rxbuff[2];
+                MOTOR2.position = rxbuff[3] - rxbuff[2]; // compensate for link1 rotation
+                MOTOR0.speed = rxbuff[4];
+                MOTOR1.speed = rxbuff[5];
+                MOTOR2.speed = rxbuff[6];
                 break;
             default:
                 break;
@@ -189,7 +198,7 @@ void SCRP_MovementControl(void *args)
 }
 
 /**
- * @brief : Computes control signals and runs motors based on target position.
+ * @brief : Computes control signals and runs motors based on position position.
  *          Starts encoder count when activated
  *
  * @param args : Nothing
