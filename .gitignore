@@ -9,5 +9,6 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
-**\build\
-**\.vscode\
+src/SCRAPPY_CONTROLLER/build\
+src/SCRAPPYY_CONTROLLER/.vscode/
+.vscode/*
