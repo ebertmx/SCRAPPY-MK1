@@ -1,0 +1,6 @@
+MOTOR1: 1545 ticks
+0- 4095
+
+Motor0: 2900
+
+MOTOR2: 2190

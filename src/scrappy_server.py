@@ -58,10 +58,11 @@ class ArmServer:
         self.window[element_id].print(data)
 
     def send_command(self, command):
+        self.print_to_element(command, 'cmd-output')
         if not self.connected:
             self.print_to_element("No connection", 'cmd-output')
             return
-        self.print_to_element(command, 'cmd-output')
+        #self.print_to_element(command, 'cmd-output')
         self.client.sendall(command.encode())
 
     def print_network_status(self):

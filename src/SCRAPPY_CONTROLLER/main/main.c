@@ -66,15 +66,43 @@ void app_main(void)
             ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
             ESP_LOGI(SCRP, "%s", command);
             numArgs = parseCommand(command, len, args);
-            if (strcmp(command, "move") == 0)
+            if (strcmp(command, "P") == 0)
             {
                 intArgs[0] = 'P';
+                convertToInts(args, numArgs, intArgs);
+                xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
+            } else if(strcmp(command, "C") == 0){
+                intArgs[0] = 'C';
                 convertToInts(args, numArgs, intArgs);
                 xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
             }
         }
         vTaskDelay(10 / portTICK_RATE_MS);
     }
+
+    // while (i < 5)
+    // {
+    //     ESP_LOGI(SCRP, "SENDING...");
+    //     xQueueSendToBack(xMC_queue, (void *)&(myposition2), portMAX_DELAY);
+    //     // myposition2[1] += 100;
+    //     // myposition2[2] += 100;
+    //     // myposition2[3] += 100;
+    //     vTaskDelay(1000 / portTICK_RATE_MS);
+    //     ESP_LOGI(SCRP, "SENDING...");
+    //     xQueueSendToBack(xMC_queue, (void *)&(myposition1), portMAX_DELAY);
+    //     // myposition2[1] += -100;
+    //     // myposition2[2] += -100;
+    //     // myposition2[3] += -100;
+
+    //     vTaskDelay(1000 / portTICK_RATE_MS);
+    //     i++;
+    // }
+
+    // while (1)
+    // {
+    //     vTaskDelay(3000 / portTICK_RATE_MS);
+    //     ESP_LOGI(SCRP, "Standing by...");
+    // }
 }
 
 /**************************WIFIANDNETWORK**************************/
