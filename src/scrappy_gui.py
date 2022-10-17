@@ -58,8 +58,8 @@ def test(args, window):
 
 def start_serial(args, window):
     if window.serial is None:
-        window.serial = SerialReader(args["port_input"], window)
-    window.serial.start()
+        window.serial = SerialReader(window)
+    window.serial.start(args['port-input'])
 
 
 def stop_serial(args, window):
@@ -104,7 +104,7 @@ network_column = [
      sg.Button("Disconnect", size=(15, 3), pad=((46, 5), (1, 50)), key='disconnect')],
     [sg.Text("Network", font=("Arial", 20))],
     [sg.Text(size=(43, 15), key='serial-display', background_color='black', text_color='green')],
-    [sg.Text("Port:"), sg.InputText(key='port_input', size=(43, 3))],
+    [sg.Text("Port:"), sg.InputText(key='port-input', size=(43, 3))],
     [sg.Button("Start Serial", size=(15, 3), pad=((5, 46), (1, 50)), key=start_serial),
      sg.Button("Stop Serial", size=(15, 3), pad=((46, 5), (1, 50)), key=stop_serial)],
 
@@ -155,9 +155,9 @@ def handle_event(event, values, window):
         if not server.arm_calibrated:
             server.print_to_element("Not calibrated", "cmd-output")
             return
-        send_move_command("M", values, server)
+        send_move_command("P", values, server)
     elif event == "test":
-        command = "M:100,100,100,30,30,30"
+        command = "P:100,100,100,30,30,30"
         server.send_command(command)
     elif "-forward" in event or "-backward" in event:
         zero_pos = int(values['0-position'])
@@ -172,7 +172,7 @@ def handle_event(event, values, window):
         elif "2-" in event:
             values['2-position'] = str(two_pos + STEP if "forward" in event else two_pos - STEP)
             window[TWO_POS].update(values['2-position'])
-        send_move_command("M", values, server)
+        send_move_command("P", values, server)
 
 
 def main():
