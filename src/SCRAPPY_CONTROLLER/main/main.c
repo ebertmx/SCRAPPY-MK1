@@ -103,14 +103,13 @@ void app_main(void)
 
 /**************************WIFIANDNETWORK**************************/
 
-void tcp_client(void);
 
 void convertToInts(char args[16][16], int numArgs, int16_t intArgs[])
 {
     char *ptr;
     for (int i = 1; i <= numArgs; i++)
     {
-        intArgs[i] = (int16_t)(strtol(args[i], &ptr, 10));
+        intArgs[i] = (int16_t)(strtol(args[i-1], &ptr, 10));
     }
 }
 
