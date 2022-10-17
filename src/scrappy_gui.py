@@ -96,8 +96,8 @@ def setup_window(w, s):
     s.print_network_status()
 
 
-def send_move_command(v, s):
-    command = f"move:{v['0-position']},{v['1-position']},{v['2-position']},{v['0-speed']},{v['1-speed']},{v['2-speed']}"
+def send_move_command(c, v, s):
+    command = f"{c}:{v['0-position']},{v['1-position']},{v['2-position']},{v['0-speed']},{v['1-speed']},{v['2-speed']}"
     if ",," in command or len(v['0-position']) == 0 or len(v["2-speed"]) == 0:
         s.print_to_element(f"Invalid move arguments {command}", "cmd-output")
         return False
@@ -115,14 +115,14 @@ def handle_event(ev, v, s, w):
     elif ev == 'disconnect':
         s.disconnect()
     elif ev == "calibrate":
-        s.arm_calibrated = send_move_command(v, s)
+        s.arm_calibrated = send_move_command("C", v, s)
     elif ev == 'motor-submit':
         if not s.arm_calibrated:
             s.print_to_element("Not calibrated", "cmd-output")
             return
-        send_move_command(v, s)
+        send_move_command("M", v, s)
     elif ev == "test":
-        command = "move:100,100,100,30,30,30"
+        command = "M:100,100,100,30,30,30"
         s.send_command(command)
     elif "-forward" in ev or "-backward" in ev:
         zero_pos = int(v['0-position'])
@@ -137,7 +137,7 @@ def handle_event(ev, v, s, w):
         elif "2-" in ev:
             v['2-position'] = str(two_pos + STEP if "forward" in ev else two_pos - STEP)
             w[TWO_POS].update(v['2-position'])
-        send_move_command(v, s)
+        send_move_command("M", v, s)
     else:
         s.send_command(ev)
 
