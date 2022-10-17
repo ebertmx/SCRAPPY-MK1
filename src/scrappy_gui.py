@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from scrappy_server import *
+from serial_reader import *
 
 WIN_CLOSED = sg.WIN_CLOSED
 
@@ -52,13 +53,13 @@ control_column = [
     [sg.Button("+", size=(15, 3), pad=((5, 40), 3), key="0-forward"),
      sg.Button("-", size=(15, 3), key='0-backward')],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
-    [sg.Text("Motor 1", font=("Arial", 15))],
+    [sg.Text("Motor B", font=("Arial", 15))],
     [sg.Text("Position"), sg.InputText(key=ONE_POS, default_text="0"), sg.Text("Speed"),
      sg.InputText(key="1-speed", default_text="50")],
     [sg.Button("+", size=(15, 3), pad=((5, 40), 3), key="1-forward"),
      sg.Button("-", size=(15, 3), key='1-backward')],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
-    [sg.Text("Motor 2", font=("Arial", 15))],
+    [sg.Text("Motor C", font=("Arial", 15))],
     [sg.Text("Position"), sg.InputText(key=TWO_POS, default_text="0"), sg.Text("Speed"),
      sg.InputText(key="2-speed", default_text="50")],
     [sg.Button("+", size=(15, 3), pad=((5, 40), 3), key="2-forward"),
@@ -105,7 +106,9 @@ def send_move_command(v, s):
 
 
 def handle_event(ev, v, s, w):
-    if ev == "cmd-input_Enter":
+    if ev == "serial":
+        s.send_command(v['serial'])
+    elif ev == "cmd-input_Enter":
         s.send_command(v['cmd-input'])
     elif ev == 'connect':
         s.start()
@@ -140,13 +143,13 @@ def handle_event(ev, v, s, w):
 
 
 if __name__ == '__main__':
-    window = sg.Window("SCRAPP1-MK1", layout, finalize=True, )
-    with ArmServer(ADDRESS, window) as server:
+    window = sg.Window("SCRAPP1-MK1", layout, finalize=True, resizable=True)
+    with ArmServer(ADDRESS, window) as server:#, SerialReader("COM4", window) as reader:
         setup_window(window, server)
         server.start()
+        #reader.start()
         while True:
             event, values = window.read()
-            print(event, values)
             if event == WIN_CLOSED:
                 break
             handle_event(event, values, server, window)

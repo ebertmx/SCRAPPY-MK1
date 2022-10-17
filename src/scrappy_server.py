@@ -21,7 +21,6 @@ class ArmServer:
         self.server_thread = None
         self.arm_calibrated = True
 
-
     def __enter__(self):
         return self
 

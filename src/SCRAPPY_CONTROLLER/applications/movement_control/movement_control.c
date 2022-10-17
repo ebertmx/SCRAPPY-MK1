@@ -28,6 +28,7 @@ static xSCRP_motor_t MOTOR0 = {
     .pin_enc = motorenc0,
     .speed = 0,
     .minspeed = 20,
+    .Kp = 0.4,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -48,7 +49,8 @@ static xSCRP_motor_t MOTOR1 = {
     .pin_dir = motordir1,
     .pin_enc = motorenc1,
     .speed = 0,
-     .minspeed = 40,
+    .minspeed = 40,
+    .Kp = 0.6,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -69,8 +71,9 @@ static xSCRP_motor_t MOTOR2 = {
     .pin_dir = motordir2,
     .pin_enc = motorenc2,
     .speed = 0,
-     .minspeed = 20,
-    .signal = 0,
+    .minspeed = 20,
+    .Kp = 0.9,
+        .signal = 0,
     .direction = 0,
     .position = 0,
     .target = 0,
@@ -254,8 +257,7 @@ void MC_Stop(void *args)
     ESP_LOGI(MCSTOP, "Initialized...");
     while (1)
     {
-        // ulTaskNotifyTakeIndexed(3, pdTRUE, portMAX_DELAY)
-        // {
+
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
         {
             if (!MOTOR0.enable)
@@ -283,39 +285,8 @@ void MC_Stop(void *args)
                 ESP_LOGI(MCSTOP, "Stop Triggered on MOTOR2");
             }
         }
-        // if (ulTaskNotifyTakeIndexed(1, pdTRUE, 0))
-        // {
-        //     xStopMotor(&MOTOR1);
-        //     ESP_LOGI(MCSTOP, "Stop Triggered");
-        // }
-        // if (ulTaskNotifyTakeIndexed(2, pdTRUE, 0))
-        // {
-        //     xStopMotor(&MOTOR2);
-        //     ESP_LOGI(MCSTOP, "Stop Triggered");
-        // }
-        // }
     }
 }
-
-// /**
-//  * @brief : Sets up SCRP motors. Updates settable parameters on request.
-//  *
-//  * @param args : Nothing
-//  */
-// void MC_Motors(void *args)
-// {
-// }
-
-// /**
-//  * @brief : Set encoder targets based on current and desired positions. Call MC_Motors to update
-//  *
-//  * @param args : Nothing
-//  */
-// void MC_Set(void *args)
-// {
-// }
-
-//****************************//
 
 // FUNCTIONS
 esp_err_t xStopMotor(xSCRP_motor_t *SCRP_motor)
@@ -357,6 +328,12 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
 
     int16_t error = SCRP_motor->enc_target - encoder;
 
+    if (abs(error) < 3)
+    {
+        SCRP_motor->enable = false;
+        return ESP_OK;
+    }
+
     if (error < 0)
     {
         SCRP_motor->direction = DIRNEG;
@@ -368,11 +345,11 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     // 0.01 * SCRP_motor->speed
     if (abs(encoder) < abs(SCRP_motor->enc_target / 2))
     {
-        SCRP_motor->signal = 0.4 * (abs(encoder));
+        SCRP_motor->signal = SCRP_motor->Kp * (abs(encoder));
     }
     else
     {
-        SCRP_motor->signal = 0.4 * (abs(error));
+        SCRP_motor->signal = SCRP_motor->Kp * (abs(error));
     }
     // SCRP_motor->signal /= abs(SCRP_motor->enc_target);
     //  printf("error = %d", error);
