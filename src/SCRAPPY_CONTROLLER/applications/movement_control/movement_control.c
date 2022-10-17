@@ -368,11 +368,11 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     // 0.01 * SCRP_motor->speed
     if (abs(encoder) < abs(SCRP_motor->enc_target / 2))
     {
-        SCRP_motor->signal = 0.5 * (abs(encoder));
+        SCRP_motor->signal = 0.4 * (abs(encoder));
     }
     else
     {
-        SCRP_motor->signal = 0.5 * (abs(error));
+        SCRP_motor->signal = 0.4 * (abs(error));
     }
     // SCRP_motor->signal /= abs(SCRP_motor->enc_target);
     //  printf("error = %d", error);

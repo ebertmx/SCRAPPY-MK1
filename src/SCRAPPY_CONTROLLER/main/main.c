@@ -50,13 +50,14 @@ void app_main(void)
     int speed1 = 80;
     int speed2 = 100;
     ESP_LOGI(SCRP, "Standing by...");
-    int16_t myposition0[] = {'P',   0,      1200,      -1000,        speed0, speed1, speed2};
-    int16_t myposition1[] = {'P',   0,      -1200,  0,      speed0, speed1, speed2};
-    int16_t myposition2[] = {'P',   0,      -1200,  1000,   speed0, speed1, speed2};
-    int16_t myposition3[] = {'P',   0,      -1200,  0,      speed0, speed1, speed2};
-    int16_t myposition4[] = {'P',   -150,   -600,   0,    speed0, speed1, speed2};
-    int16_t myposition5[] = {'P',   -150,   -600,   0,    speed0, speed1, speed2};
-    int16_t myposition6[] = {'P',   0, 0, 0,          speed0, speed1, speed2};
+    int16_t myposition0[] = {'P', 0, 1000, 0, speed0, speed1, speed2};
+    int16_t myposition1[] = {'P', 0, -700, -600, speed0, speed1, speed2};
+    int16_t myposition2[] = {'P', 0, -900, -100, speed0-10, speed1-10, speed2-10};
+    int16_t myposition3[] = {'P', 0, -700, -400, speed0, speed1, speed2};
+
+    int16_t myposition4[] = {'P', -500, -700, -400, speed0, speed1, speed2};
+    int16_t myposition5[] = {'P', -500, -900, -100, speed0-10, speed1-10, speed2-10};
+    int16_t myposition6[] = {'P', 0, 0, 0, speed0, speed1, speed2};
     // int16_t myposition2[] = {'P', -200, 100, 100, 50, 50, 50};
     char command[128];
     char args[16][16];
@@ -90,9 +91,18 @@ void app_main(void)
 
     //  while (i < 5)
     //    {
-    ESP_LOGI(SCRP, "SENDING...");
-    //xQueueSendToBack(xMC_queue, (void *)&(myposition0), portMAX_DELAY);
-    if (true)
+  ESP_LOGI(SCRP, "SENDING...");
+    xQueueSendToBack(xMC_queue, (void *)&(myposition0), portMAX_DELAY);
+    //int16_t temp[] = {'P', 0, 0, 0, speed0, speed1, speed2};
+
+    // for (int inc = 0; inc < 100; inc = inc + 1)
+    // {
+
+    //     temp[2] -= 10;
+    //     temp[3] += 20;
+    //     xQueueSendToBack(xMC_queue, (void *)&(temp), portMAX_DELAY);
+    // }
+    if (false)
     {
         ESP_LOGI(SCRP, "SENDING...");
         xQueueSendToBack(xMC_queue, (void *)&(myposition1), portMAX_DELAY);
