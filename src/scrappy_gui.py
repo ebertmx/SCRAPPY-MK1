@@ -1,7 +1,8 @@
 import PySimpleGUI as sg
 from scrappy_server import *
 from serial_reader import *
-
+import traceback
+import serial.tools.list_ports
 WIN_CLOSED = sg.WIN_CLOSED
 
 STEP = 10
@@ -17,30 +18,52 @@ TWO_MOTOR = 2
 POS = 1
 NEG = -1
 
+default_serial_string = \
+    """Serial Port: None
+Connected: False
+    """
 
-def move_0(direction, event_vars):
+
+class Window(sg.Window):
+
+    def __init__(self):
+        super(Window, self).__init__("SCRAPPY-MK1", layout, finalize=True, resizable=True)
+        self.serial = None
+        self.server = None
+
+
+def move_0(args, window):
     pass
 
 
-def move_1(direction, event_vars):
+def move_1(args, window):
     pass
 
 
-def move_2(direction, event_vars):
+def move_2(args, window):
     pass
 
 
-def calibrate(event_vars):
+def calibrate(args, window):
     pass
 
 
-def submit(event_vars):
+def submit(args, window):
     pass
 
 
-def test(event_vars):
+def test(args, window):
     pass
 
+
+def start_serial(args, window):
+    if window.serial is None:
+        window.serial = SerialReader(args["port_input"], window)
+    window.serial.start()
+
+
+def stop_serial(args, window):
+    window.serial.stop()
 
 
 sg.theme('Dark')
@@ -78,7 +101,13 @@ network_column = [
     [sg.Text("Network", font=("Arial", 20))],
     [sg.Text(size=(43, 15), key='network-display', background_color='black', text_color='green')],
     [sg.Button("Reconnect", size=(15, 3), pad=((5, 46), (1, 50)), key="connect"),
-     sg.Button("Disconnect", size=(15, 3), pad=((46, 5), (1, 50)), key='disconnect')]
+     sg.Button("Disconnect", size=(15, 3), pad=((46, 5), (1, 50)), key='disconnect')],
+    [sg.Text("Network", font=("Arial", 20))],
+    [sg.Text(size=(43, 15), key='serial-display', background_color='black', text_color='green')],
+    [sg.Text("Port:"), sg.InputText(key='port_input', size=(43, 3))],
+    [sg.Button("Start Serial", size=(15, 3), pad=((5, 46), (1, 50)), key=start_serial),
+     sg.Button("Stop Serial", size=(15, 3), pad=((46, 5), (1, 50)), key=stop_serial)],
+
 ]
 
 layout = [
@@ -90,69 +119,80 @@ layout = [
 ]
 
 
-def setup_window(w, s):
-    w.maximize()
-    w['cmd-input'].bind("<Return>", "_Enter")
-    s.print_network_status()
+def setup_window(window, server):
+    window.maximize()
+    window['cmd-input'].bind("<Return>", "_Enter")
+    window.server = server
+    server.print_network_status()
+    window['serial-display'].update(default_serial_string)
 
 
-def send_move_command(c, v, s):
-    command = f"{c}:{v['0-position']},{v['1-position']},{v['2-position']},{v['0-speed']},{v['1-speed']},{v['2-speed']}"
-    if ",," in command or len(v['0-position']) == 0 or len(v["2-speed"]) == 0:
-        s.print_to_element(f"Invalid move arguments {command}", "cmd-output")
+def send_move_command(command, values, server):
+    command = f"{command}:{values['0-position']},{values['1-position']},{values['2-position']},{values['0-speed']},{values['1-speed']},{values['2-speed']}"
+    if ",," in command or len(values['0-position']) == 0 or len(values["2-speed"]) == 0:
+        server.print_to_element(f"Invalid move arguments {command}", "cmd-output")
         return False
-    s.send_command(command)
+    server.send_command(command)
     return True
 
 
-def handle_event(ev, v, s, w):
-    if ev == "serial":
-        s.send_command(v['serial'])
-    elif ev == "cmd-input_Enter":
-        s.send_command(v['cmd-input'])
-    elif ev == 'connect':
-        s.start()
-    elif ev == 'disconnect':
-        s.disconnect()
-    elif ev == "calibrate":
-        s.arm_calibrated = send_move_command("C", v, s)
-    elif ev == 'motor-submit':
-        if not s.arm_calibrated:
-            s.print_to_element("Not calibrated", "cmd-output")
+def handle_event(event, values, window):
+    print(event)
+    server = window.server
+    if callable(event):
+        event(values, window)
+    elif event == "serial-event":
+        server.send_command(values['serial-event'])
+    elif event == "cmd-input_Enter":
+        server.send_command(values['cmd-input'])
+    elif event == 'connect':
+        server.start()
+    elif event == 'disconnect':
+        server.disconnect()
+    elif event == "calibrate":
+        server.arm_calibrated = send_move_command("C", values, server)
+    elif event == 'motor-submit':
+        if not server.arm_calibrated:
+            server.print_to_element("Not calibrated", "cmd-output")
             return
-        send_move_command("M", v, s)
-    elif ev == "test":
+        send_move_command("M", values, server)
+    elif event == "test":
         command = "M:100,100,100,30,30,30"
-        s.send_command(command)
-    elif "-forward" in ev or "-backward" in ev:
-        zero_pos = int(v['0-position'])
-        one_pos = int(v['1-position'])
-        two_pos = int(v['2-position'])
-        if "0-" in ev:
-            v['0-position'] = str(zero_pos + STEP if "forward" in ev else zero_pos - STEP)
-            w[ZERO_POS].update(v['0-position'])
-        elif "1-" in ev:
-            v['1-position'] = str(one_pos + STEP if "forward" in ev else one_pos - STEP)
-            w[ONE_POS].update(v['1-position'])
-        elif "2-" in ev:
-            v['2-position'] = str(two_pos + STEP if "forward" in ev else two_pos - STEP)
-            w[TWO_POS].update(v['2-position'])
-        send_move_command("M", v, s)
-    else:
-        s.send_command(ev)
+        server.send_command(command)
+    elif "-forward" in event or "-backward" in event:
+        zero_pos = int(values['0-position'])
+        one_pos = int(values['1-position'])
+        two_pos = int(values['2-position'])
+        if "0-" in event:
+            values['0-position'] = str(zero_pos + STEP if "forward" in event else zero_pos - STEP)
+            window[ZERO_POS].update(values['0-position'])
+        elif "1-" in event:
+            values['1-position'] = str(one_pos + STEP if "forward" in event else one_pos - STEP)
+            window[ONE_POS].update(values['1-position'])
+        elif "2-" in event:
+            values['2-position'] = str(two_pos + STEP if "forward" in event else two_pos - STEP)
+            window[TWO_POS].update(values['2-position'])
+        send_move_command("M", values, server)
 
 
-if __name__ == '__main__':
-    window = sg.Window("SCRAPP1-MK1", layout, finalize=True, resizable=True)
-    with ArmServer(ADDRESS, window) as server, SerialReader("COM4", window) as reader:
+def main():
+    window = Window()
+    with ArmServer(ADDRESS, window) as server:
         setup_window(window, server)
         server.start()
-        reader.start()
         while True:
             event, values = window.read()
             if event == WIN_CLOSED:
                 break
-            handle_event(event, values, server, window)
+            try:
+                handle_event(event, values, window)
+            except Exception as e:
+                print(e)
+                traceback.print_exc()
             server.print_network_status()
 
         window.close()
+
+
+if __name__ == '__main__':
+    main()
