@@ -66,9 +66,13 @@ void app_main(void)
             ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
             ESP_LOGI(SCRP, "%s", command);
             numArgs = parseCommand(command, len, args);
-            if (strcmp(command, "move") == 0)
+            if (strcmp(command, "P") == 0)
             {
                 intArgs[0] = 'P';
+                convertToInts(args, numArgs, intArgs);
+                xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
+            } else if(strcmp(command, "C") == 0){
+                intArgs[0] = 'C';
                 convertToInts(args, numArgs, intArgs);
                 xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
             }
