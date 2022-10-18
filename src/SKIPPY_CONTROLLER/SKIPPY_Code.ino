@@ -23,10 +23,11 @@ bool checkbutton(int pin);
 
 
 bool sending = false;
+int magnet = false;
 
 void setup()
 {
-  // Set serial to a baud rate of 9600 and configure analog and digital pins
+  // Set serial to a baud rate of 115200 and configure analog and digital pins
   // Analog pins are for the potentiometers
   // Digital pin is for the control button
 
@@ -37,6 +38,7 @@ void setup()
   //pinMode(3, OUTPUT);
   pinMode(4, INPUT_PULLUP);
   pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
   //digitalWrite(3,1);
   Serial.println("Program Start");
 }
@@ -91,7 +93,7 @@ void loop()
   if (checkbutton(4))
   {
     Serial.println(control_data);
-        while (checkbutton(4)){
+    while (checkbutton(4)){
      continue;
     }
   }
@@ -99,9 +101,14 @@ void loop()
   if (checkbutton(2))
   {
     Serial.println(calibration_data);
-       while (checkbutton(2)){
+    while (checkbutton(2)){
      continue;
     }
+  }
+
+  if (checkbutton(1)){
+    magnet = !magnet;
+    Serial.println("M:%s,0,0,0,0,0", String(magnet))
   }
   
 }
