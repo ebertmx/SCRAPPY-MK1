@@ -58,7 +58,7 @@ class ArmServer:
         self.window[element_id].print(data)
 
     def send_command(self, command):
-        self.print_to_element(command, 'scrappy-output')
+        self.print_to_element(command, 'cmd-output')
         if not self.connected:
             self.print_to_element("No connection", 'scrappy-display')
             return
