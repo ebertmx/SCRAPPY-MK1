@@ -12,7 +12,8 @@ extern QueueHandle_t xMC_queue;
 
 void app_main(void)
 {
-    //
+    //Setup pin for magnet
+     gpio_set_direction(2, GPIO_MODE_OUTPUT);
     // esp_log_level_set("*", ESP_LOG_NONE);
     esp_log_level_set("MC-MOTOR", ESP_LOG_NONE);
     ESP_LOGI(SCRP, "SCRAPPY Starting...");
@@ -61,7 +62,11 @@ void app_main(void)
             ESP_LOGI(SCRP, "Received %d bytes from %s:", len, HOST_IP_ADDR);
             ESP_LOGI(SCRP, "%s", command);
             ESP_ERROR_CHECK(parseCommand(command, len, intArgs));
+            if (intArgs[0] == 'M'){
+                gpio_set_level(2, intArgs[1]);
+            } else {
                 xQueueSendToBack(xMC_queue, (void *)&(intArgs), portMAX_DELAY);
+            }
             memset(command, 0, 128);
         }
         vTaskDelay(10 / portTICK_RATE_MS);
