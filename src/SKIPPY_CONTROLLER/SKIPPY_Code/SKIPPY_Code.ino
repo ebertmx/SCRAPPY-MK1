@@ -1,6 +1,6 @@
 /*
 Control program for SCOOBY to read positional sensor data, average it and send it to
-BERT's control system
+SCRAPPY's control system
 */
 
 
@@ -14,9 +14,10 @@ unsigned long interval = 15;
 String positional_character = "p";
 char final_character = '\n';
 
-int link0_pin = 25;
-int link1_pin = 26;
-int link2_pin = 27; 
+int link0_pin = 36;
+int link1_pin = 35;
+int link2_pin = 34; 
+
 
 int readQvalue(String pinN);
 bool checkbutton(int pin);
@@ -36,16 +37,16 @@ void setup()
   pinMode(link1_pin, INPUT);
   pinMode(link2_pin, INPUT);
   //pinMode(3, OUTPUT);
-  pinMode(4, INPUT_PULLUP);
-  pinMode(2, INPUT_PULLUP);
+  pinMode(32, INPUT_PULLUP);
   pinMode(3, INPUT_PULLUP);
+  pinMode(33, INPUT_PULLUP);
   //digitalWrite(3,1);
   Serial.println("Program Start");
 }
 
 void loop()
 {
-    delay(250);  
+    delay(50);  
   // Instantiate local variables
   unsigned long previousMillis = millis();
   unsigned long currentMillis = millis();
@@ -75,40 +76,47 @@ void loop()
   b = b / n;
   c = c / n;
   
-  a = a * 2900 / 4095;
-  b = (b-720) * 1545/(4095-718);
-  c = 2190 - ((c-720) * 2190/(4095-718));
+ a = a * 2900 / 4095;
+ b = (b-630) * 1545/(4095-630);
+c = ((c-52) * 3550/(4095-52));
 
   // Reset time
   previousMillis = currentMillis;
 
   // Set control data value
-  String control_data = "P:" + String(a) + ',' + String(b) + ',' + String(c) + ',' + "50" + ',' + "50" + ',' + "50" + final_character;
+  String control_data = "P:" + String(a) + ',' + String(b) + ',' + String(c) + ',' + "60" + ',' + "90" + ',' + "70" + final_character;
   
   //Set calibration data
   String calibration_data = "C:" + String(a) + ',' + String(b) + ',' + String(c) + ',' + "50" + ',' + "50" + ',' + "50" + final_character;
     
   // Send control data to control system if SKIPPY's control button is pressed
   
-  if (checkbutton(4))
+  if (checkbutton(3))
   {
     Serial.println(control_data);
-    while (checkbutton(4)){
+    while (checkbutton(3)){
      continue;
     }
   }
 
-  if (checkbutton(2))
+  if (checkbutton(32))
   {
     Serial.println(calibration_data);
-    while (checkbutton(2)){
+    while (checkbutton(32)){
      continue;
     }
   }
 
-  if (checkbutton(1)){
+  if (checkbutton(33)){
     magnet = !magnet;
-    Serial.println("M:%s,0,0,0,0,0", String(magnet))
+    if(magnet){
+          Serial.println("M: 1, 0, 0, 0, 0, 0");
+    }else{
+          Serial.println("M: 0, 0, 0, 0, 0, 0");
+    }
+        while (checkbutton(33)){
+     continue;
+    }
   }
   
 }
@@ -128,5 +136,3 @@ bool checkbutton(int pin) {
   }
 
 }
-
-
