@@ -11,6 +11,7 @@ STEP = 10
 ZERO_POS = "0-position"
 ONE_POS = "1-position"
 TWO_POS = "2-position"
+MAG_STAT = "magnet-status"
 
 ZERO_MOTOR = 0
 ONE_MOTOR = 1
@@ -50,6 +51,13 @@ def submit(args, window):
 
 def test(args, window):
     pass
+
+
+def toggle_mag(args, window):
+    state = "0" if args[MAG_STAT] == "1" else "1"
+    command = f"M:{state},0,0,0,0,0"
+    window[MAG_STAT].update(state)
+    window.server.send_command(command)
 
 
 def start_serial(args, window):
@@ -95,6 +103,10 @@ control_column = [
      sg.InputText(size=(10, 10), key="2-speed", default_text="50")],
     [sg.Button("+", size=(5, 1), pad=((5, 40), 3), key="2-forward"),
      sg.Button("-", size=(5, 1), key='2-backward')],
+    [sg.HorizontalSeparator(pad=(5, (3, 30)))],
+    [sg.Text("Magnet", font=("Arial", 15))],
+    [sg.Text("Status"), sg.InputText(size=(10, 10), key=MAG_STAT, default_text="0"),
+     sg.Button("Toggle", size=(5, 1), pad=((5, 40), 3), key=toggle_mag)],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
     [sg.Button("Submit", size=(10, 3), key="motor-submit"), sg.Button("Calibrate", size=(10, 3), key="calibrate"),
      sg.Button("Test", size=(10, 3), key="test")],
