@@ -29,6 +29,9 @@ static xSCRP_motor_t MOTOR0 = {
     .speed = 0,
     .minspeed = 20,
     .Kp = 0.4,
+    .error = 0,
+    .errorprev = -1,
+    .count = 0,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -49,8 +52,11 @@ static xSCRP_motor_t MOTOR1 = {
     .pin_dir = motordir1,
     .pin_enc = motorenc1,
     .speed = 0,
-    .minspeed = 40,
-    .Kp = 0.4,
+    .minspeed = 50,
+    .Kp = 0.6,
+    .error = 0,
+    .errorprev = -1,
+    .count = 0,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -71,8 +77,11 @@ static xSCRP_motor_t MOTOR2 = {
     .pin_dir = motordir2,
     .pin_enc = motorenc2,
     .speed = 0,
-    .minspeed = 20,
-    .Kp = 0.9,
+    .minspeed = 40,
+    .Kp = 0.7,
+    .error = 0,
+    .errorprev = -1,
+    .count = 0,
     .signal = 0,
     .direction = 0,
     .position = 0,
@@ -307,10 +316,25 @@ void MC_Stop(void *args)
     }
 }
 
+esp_err_t xResetMotors(void)
+{
+    MOTOR0.enable = false;
+    MOTOR1.enable = false;
+    MOTOR2.enable = false;
+    xStopMotor(&MOTOR0);
+    xStopMotor(&MOTOR1);
+    xStopMotor(&MOTOR2);
+    xSetMotor(&MOTOR0);
+    xSetMotor(&MOTOR1);
+    xSetMotor(&MOTOR2);
+    return ESP_OK;
+}
+
 // FUNCTIONS
 esp_err_t xStopMotor(xSCRP_motor_t *SCRP_motor)
 {
     // SCRP_motor->enable = false;
+    // ESP_LOGI(MCRUN, "Motor%d Stopped", SCRP_motor->num);
     pcnt_counter_pause(SCRP_motor->enc_unit);
     ESP_ERROR_CHECK(mcpwm_set_duty(SCRP_motor->pwm_unit, SCRP_motor->pwm_timer, SCRP_motor->pwm_gen, 0));
     return ESP_OK;
@@ -344,16 +368,27 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     ESP_LOGI(MCMOTORS, "Computing MOTOR%d control signal...", SCRP_motor->num);
     int16_t encoder;
     pcnt_get_counter_value(SCRP_motor->enc_unit, &encoder);
+    SCRP_motor->error = SCRP_motor->enc_target - encoder;
 
-    int16_t error = SCRP_motor->enc_target - encoder;
+    if (SCRP_motor->error == SCRP_motor->errorprev)
+    {
+        SCRP_motor->count++;
+        if (SCRP_motor->count == 100)
+        {
+            ESP_LOGE(MCRUN, "CONTACT ON MOTOR%d", SCRP_motor->num);
+            xResetMotors(); // reset the motor
+        }
+    }else{
+        SCRP_motor->count = 0;
+    }
 
-    if (abs(error) < 3)
+    if (abs(SCRP_motor->error) < 3)
     {
         SCRP_motor->enable = false;
         return ESP_OK;
     }
 
-    if (error < 0)
+    if (SCRP_motor->error < 0)
     {
         SCRP_motor->direction = DIRNEG;
 
@@ -368,7 +403,7 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
         SCRP_motor->direction = DIRPOS;
         if (SCRP_motor->num == 1)
         {
-            SCRP_motor->Kp = 0.6;
+            SCRP_motor->Kp = 1;
             SCRP_motor->minspeed = 40;
         }
     }
@@ -379,7 +414,7 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     }
     else
     {
-        SCRP_motor->signal = SCRP_motor->Kp * (abs(error));
+        SCRP_motor->signal = SCRP_motor->Kp * (abs(SCRP_motor->error));
     }
     // SCRP_motor->signal /= abs(SCRP_motor->enc_target);
     //  printf("error = %d", error);
@@ -394,7 +429,7 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     }
     // SCRP_motor->signal = SCRP_motor->speed; /// CHANGE LATER
     ESP_LOGI(MCMOTORS, "MOTOR%d Signal =%f", SCRP_motor->num, SCRP_motor->signal);
-
+    SCRP_motor->errorprev = SCRP_motor->error;
     return ESP_OK;
 }
 
@@ -413,6 +448,10 @@ esp_err_t xSetMotor(xSCRP_motor_t *SCRP_motor)
     // set encoder target
     SCRP_motor->enc_target = SCRP_motor->target - SCRP_motor->position;
 
+    // Reset counting values;
+SCRP_motor->error = 0;
+SCRP_motor->errorprev = 0;
+SCRP_motor->count = 0;
     // set interrupt trigger
     pcnt_set_event_value(SCRP_motor->enc_unit, PCNT_EVT_THRES_1, SCRP_motor->enc_target);
     pcnt_counter_clear(SCRP_motor->enc_unit); // clear counter to enable trigger

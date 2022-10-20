@@ -65,6 +65,9 @@ typedef struct xSCRP_motor_t
     uint16_t minspeed;
     float Kp;
     float signal;
+    int16_t error;
+    int16_t errorprev;
+    unsigned int count;
     int direction;
     int16_t position;
     int16_t target;
@@ -99,6 +102,7 @@ void MC_Stop(void *args);
 // void MC_Motors(void *args);
 
 /*************FUNCTION*************/
+esp_err_t xResetMotors(void);
 esp_err_t xClearCounter(xSCRP_motor_t *SCRP_motor);
 esp_err_t xStopMotor(xSCRP_motor_t *SCRP_motor);
 esp_err_t xUpdateMotor(xSCRP_motor_t *SCRP_motor);
