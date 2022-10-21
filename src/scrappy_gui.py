@@ -20,6 +20,8 @@ TWO_MOTOR = 2
 POS = 1
 NEG = -1
 
+cmd_list = ["P:10,10,10,30,30,30", "P:10,10,10,30,30,30"] # just enter whatever commands you want in this list
+
 
 class Window(sg.Window):
 
@@ -50,7 +52,8 @@ def submit(args, window):
 
 
 def test(args, window):
-    pass
+    for i in cmd_list:
+        window.server.send_command(i)
 
 
 def toggle_mag(args, window):
@@ -109,7 +112,7 @@ control_column = [
      sg.Button("Toggle", size=(5, 1), pad=((5, 40), 3), key=toggle_mag)],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
     [sg.Button("Submit", size=(10, 3), key="motor-submit"), sg.Button("Calibrate", size=(10, 3), key="calibrate"),
-     sg.Button("Test", size=(10, 3), key="test")],
+     sg.Button("Test", size=(10, 3), key=test)],
     [sg.HorizontalSeparator(pad=(5, (3, 30)))],
     [sg.Text("Command Output", font=("Arial", 20))],
     [sg.Multiline(size=(43, 15), key='cmd-output', background_color='black', text_color='green', reroute_stdout=False,
