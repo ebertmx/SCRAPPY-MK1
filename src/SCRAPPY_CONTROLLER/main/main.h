@@ -32,7 +32,7 @@ static const char *NET = "SCRP-NETWORK";
 #include "esp_log.h"
 #include "fcntl.h"
 
-#define HOST_IP_ADDR "192.168.1.140"
+#define HOST_IP_ADDR "192.168.150.228"
 #define PORT 9999
 #define MAX_ARG_LENGTH 16
 
@@ -49,8 +49,8 @@ static const char *NET = "SCRP-NETWORK";
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define EXAMPLE_ESP_WIFI_SSID "FREE_WIFI!!!"
-#define EXAMPLE_ESP_WIFI_PASS "WarzoneIsLife1"
+#define EXAMPLE_ESP_WIFI_SSID "DRAGONSCLAW"
+#define EXAMPLE_ESP_WIFI_PASS "getoffmywifi"
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_PSK
 

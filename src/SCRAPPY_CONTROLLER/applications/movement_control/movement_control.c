@@ -28,7 +28,7 @@ static xSCRP_motor_t MOTOR0 = {
     .pin_enc = motorenc0,
     .speed = 0,
     .minspeed = 20,
-    .Kp = 0.4,
+    .Kp = 0.3,
     .error = 0,
     .errorprev = -1,
     .count = 0,
@@ -52,8 +52,8 @@ static xSCRP_motor_t MOTOR1 = {
     .pin_dir = motordir1,
     .pin_enc = motorenc1,
     .speed = 0,
-    .minspeed = 50,
-    .Kp = 0.6,
+    .minspeed = 30,
+    .Kp = 0.5,
     .error = 0,
     .errorprev = -1,
     .count = 0,
@@ -77,8 +77,8 @@ static xSCRP_motor_t MOTOR2 = {
     .pin_dir = motordir2,
     .pin_enc = motorenc2,
     .speed = 0,
-    .minspeed = 40,
-    .Kp = 0.7,
+    .minspeed = 30,
+    .Kp = 0.4,
     .error = 0,
     .errorprev = -1,
     .count = 0,
@@ -373,7 +373,7 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
     if (SCRP_motor->error == SCRP_motor->errorprev)
     {
         SCRP_motor->count++;
-        if (SCRP_motor->count == 100)
+        if (SCRP_motor->count == TIMEOUT)
         {
             ESP_LOGE(MCRUN, "CONTACT ON MOTOR%d", SCRP_motor->num);
             xResetMotors(); // reset the motor
@@ -403,7 +403,7 @@ esp_err_t xComputeControlSignal(xSCRP_motor_t *SCRP_motor)
         SCRP_motor->direction = DIRPOS;
         if (SCRP_motor->num == 1)
         {
-            SCRP_motor->Kp = 1;
+            SCRP_motor->Kp = 0.6;
             SCRP_motor->minspeed = 40;
         }
     }

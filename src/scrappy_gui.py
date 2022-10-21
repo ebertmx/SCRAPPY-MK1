@@ -3,6 +3,7 @@ from scrappy_server import *
 from serial_reader import *
 import traceback
 import serial.tools.list_ports
+import time
 
 WIN_CLOSED = sg.WIN_CLOSED
 
@@ -20,7 +21,7 @@ TWO_MOTOR = 2
 POS = 1
 NEG = -1
 
-cmd_list = ["P:10,10,10,30,30,30", "P:10,10,10,30,30,30"] # just enter whatever commands you want in this list
+cmd_list = ["P:0,-350,3000, 50, 30, 50", "P:500,-350,2800, 50, 50, 50","P:500,-550,2900, 50, 30, 30","M:1,0,0,0,0,0","P:-500,-200,2800, 50, 50, 50", "P:-500,-550,2900, 50, 30, 30",  "M:0,0,0,0,0,0","P:0,-350,3000, 50, 50, 50"] # just enter whatever commands you want in this list
 
 
 class Window(sg.Window):
@@ -52,8 +53,28 @@ def submit(args, window):
 
 
 def test(args, window):
+    count = 1
     for i in cmd_list:
         window.server.send_command(i)
+        if count==1: 
+            time.sleep(8)
+        if count==2: 
+            time.sleep(3)
+        if count==3: 
+            time.sleep(3)
+        if count==4: 
+            time.sleep(1)
+        if count==5: 
+            time.sleep(4)
+        if count==6: 
+            time.sleep(2)
+        if count==7: 
+            time.sleep(2)
+        if count==8: 
+            time.sleep(1)
+      
+        count=count+1
+        
 
 
 def toggle_mag(args, window):

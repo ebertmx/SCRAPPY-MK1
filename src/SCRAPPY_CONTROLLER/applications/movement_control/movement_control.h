@@ -28,6 +28,7 @@ static const char *MCMOTORS = "MC-MOTOR";
 #define motorHlimit 30000
 #define motorLlimit -30000
 #define PWMFREQUENCY 20000
+#define TIMEOUT 500
 
 #define motorpwm0 19
 #define motordir0 21
