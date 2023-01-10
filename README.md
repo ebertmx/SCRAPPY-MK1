@@ -1,10 +1,16 @@
 # SCRAPPY-MK1
  A 3D printed robot arm.
  
- This arm was developed over a 4 week period as an engineering demonstration. Inspired by a previous project, HUEBERT MK2, SCRAPPY consist mostly of 3D printed components and is controllable over the internet (IoT)
+ This arm was developed over a 4 week period as an engineering demonstration. Inspired by a previous project, HUEBERT MK2, SCRAPPY consist mostly of 3D printed components and is controllable over the internet (IoT).
+
+
 ![Alt text](images/2.jpg "SCRAPPY")
 
+
+
 ![Alt text](images/1.png "SCRAPPY - Use Case")
+
+
 
 
 The goals of project SCRAPPY were too design and build a robot arm which
