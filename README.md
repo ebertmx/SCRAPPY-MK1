@@ -2,14 +2,14 @@
  A 3D printed robot arm.
  
  This arm was developed over a 4 week period as an engineering demonstration. Inspired by a previous project, HUEBERT MK2, SCRAPPY consist mostly of 3D printed components and is controllable over the internet (IoT)
-![Alt text](images/2.png "SCRAPPY")
+![Alt text](images/2.jpg "SCRAPPY")
 
 ![Alt text](images/1.png "SCRAPPY - Use Case")
 
 
 The goals of project SCRAPPY were too design and build a robot arm which
 
-1. was highly modular
+1. is highly modular
 2. inexpensive
 3. had at least 3 DoF
 4. could be controlled wireless over a websocket or similar
@@ -22,7 +22,7 @@ The code contained in this respository is designed to run on a 30pin ESP32 Dev m
 
 
 ![Alt text](images/3a.png "PCB design")
-![Alt text](images/3b.png "Electrical")
+![Alt text](images/3b.jpg "Electrical")
 ![Alt text](images/4.png "SCOOBY")
 ![Alt text](images/5.png "GUI")
 This project is ongoing. More details on the use and implementation of this code will be posted when available.
