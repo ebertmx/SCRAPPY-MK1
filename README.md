@@ -1,5 +1,5 @@
 # SCRAPPY-MK1
- A 3D printed robot arm.
+ A 3D printed robot arm. View documents in project_files for a complete description.
  
  This arm was developed over a 4 week period as an engineering demonstration. Inspired by a previous project, HUEBERT MK2, SCRAPPY consist mostly of 3D printed components and is controllable over the internet (IoT).
 
